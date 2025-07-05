@@ -5,6 +5,13 @@
 - Add tagpr for PR-based release management by @yammerjp in https://github.com/yammerjp/devslot/pull/9
 - Fix: APP_IDをシークレットから読み取るように修正 by @yammerjp in https://github.com/yammerjp/devslot/pull/10
 - Add clarifying comment about version override by @yammerjp in https://github.com/yammerjp/devslot/pull/12
+- Configure tagpr to use git tags only by @yammerjp in https://github.com/yammerjp/devslot/pull/15
+
+## [v0.2.1](https://github.com/yammerjp/devslot/compare/v0.2.0...v0.2.1) - 2025-07-05
+- Fix version embedding for GoReleaser builds by @yammerjp in https://github.com/yammerjp/devslot/pull/8
+- Add tagpr for PR-based release management by @yammerjp in https://github.com/yammerjp/devslot/pull/9
+- Fix: APP_IDをシークレットから読み取るように修正 by @yammerjp in https://github.com/yammerjp/devslot/pull/10
+- Add clarifying comment about version override by @yammerjp in https://github.com/yammerjp/devslot/pull/12
 
 ## [Unreleased]
 
