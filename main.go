@@ -76,6 +76,7 @@ func (cmd *DoctorCmd) Run(ctx *Context) error {
 }
 
 // version must be var in main package for GoReleaser ldflags
+// This value is overridden by GoReleaser during release builds
 var version = "dev"
 
 type VersionCmd struct{}
