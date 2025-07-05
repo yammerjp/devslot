@@ -71,3 +71,27 @@ NOTES:
 
 Project homepage and documentation: https://github.com/yammerjp/devslot
 ```
+
+## Release Process
+
+This project uses [tagpr](https://github.com/Songmu/tagpr) for automated release management:
+
+1. When changes are merged to `main`, tagpr automatically creates/updates a release PR
+2. The release PR includes the next version number and CHANGELOG updates
+3. Merging the release PR triggers:
+   - Tag creation by tagpr
+   - Binary releases by GoReleaser
+
+### Setup Requirements
+
+To enable the full release workflow:
+
+1. **Repository Settings**: Enable "Allow GitHub Actions to create and approve pull requests" under Settings > Actions > General
+2. **Personal Access Token (Optional but Recommended)**:
+   - Create a PAT with `repo` and `workflow` scopes
+   - Add it as `TAGPR_PAT` secret in the repository
+   - This allows tagpr to trigger the release workflow
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

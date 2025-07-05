@@ -21,4 +21,6 @@ jobs:
       - name: Run tagpr
         uses: Songmu/tagpr@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT if available, otherwise fallback to GITHUB_TOKEN
+          # PAT is required to trigger the release workflow
+          GITHUB_TOKEN: ${{ secrets.TAGPR_PAT || secrets.GITHUB_TOKEN }}
