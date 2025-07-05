@@ -75,6 +75,7 @@ func (cmd *DoctorCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
+// version must be var in main package for GoReleaser ldflags
 var version = "dev"
 
 type VersionCmd struct{}
