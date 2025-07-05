@@ -1,0 +1,15 @@
+[tools]
+go = "1.23"
+node = "22"
+"npm:zx" = "latest"
+
+[env]
+NODE_PATH = "/Users/yammer/.local/share/mise/installs/npm-zx/latest/lib/node_modules"
+
+[tasks.test]
+description = "Run all tests"
+run = "make test"
+
+[tasks.test-e2e]
+description = "Run E2E tests"
+run = "make test-e2e"

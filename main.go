@@ -35,9 +35,7 @@ type InitCmd struct {
 	AllowDelete bool `help:"Delete repositories no longer listed in devslot.yaml"`
 }
 
-func (cmd *InitCmd) Run(ctx *Context) error {
-	return fmt.Errorf("not implemented")
-}
+// Run is defined in init.go
 
 type CreateCmd struct {
 	Slot string `arg:"" help:"Slot name"`
@@ -135,6 +133,7 @@ func main() {
 	}
 
 	if err := app.Run(args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
