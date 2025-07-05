@@ -29,15 +29,13 @@ type BoilerplateCmd struct {
 	Dir string `arg:"" help:"Target directory"`
 }
 
-func (cmd *BoilerplateCmd) Run() error {
-	return fmt.Errorf("not implemented")
-}
+// Run is defined in boilerplate.go
 
 type InitCmd struct {
 	AllowDelete bool `help:"Delete repositories no longer listed in devslot.yaml"`
 }
 
-func (cmd *InitCmd) Run() error {
+func (cmd *InitCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -45,7 +43,7 @@ type CreateCmd struct {
 	Slot string `arg:"" help:"Slot name"`
 }
 
-func (cmd *CreateCmd) Run() error {
+func (cmd *CreateCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -53,7 +51,7 @@ type DestroyCmd struct {
 	Slot string `arg:"" help:"Slot name"`
 }
 
-func (cmd *DestroyCmd) Run() error {
+func (cmd *DestroyCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -61,19 +59,19 @@ type ReloadCmd struct {
 	Slot string `arg:"" help:"Slot name"`
 }
 
-func (cmd *ReloadCmd) Run() error {
+func (cmd *ReloadCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
 type ListCmd struct{}
 
-func (cmd *ListCmd) Run() error {
+func (cmd *ListCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
 type DoctorCmd struct{}
 
-func (cmd *DoctorCmd) Run() error {
+func (cmd *DoctorCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
