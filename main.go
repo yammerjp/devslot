@@ -131,6 +131,7 @@ func main() {
 	}
 
 	if err := app.Run(args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }

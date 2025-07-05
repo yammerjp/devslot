@@ -37,7 +37,7 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 
 	// Clone missing repositories
 	for _, repoURL := range config.Repositories {
-		repoName := extractRepoName(repoURL)
+		repoName, isLocal := parseRepoURL(repoURL)
 		if repoName == "" {
 			fmt.Fprintf(ctx.Writer, "Warning: skipping invalid repository URL: %s\n", repoURL)
 			continue
@@ -53,7 +53,17 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 
 		// Clone as bare repository
 		fmt.Fprintf(ctx.Writer, "Cloning %s into %s\n", repoURL, repoName)
-		gitCmd := exec.Command("git", "clone", "--bare", repoURL, repoPath)
+		
+		// For local paths, convert to absolute path
+		cloneURL := repoURL
+		if isLocal && !strings.HasPrefix(repoURL, "file://") {
+			absPath, err := filepath.Abs(repoURL)
+			if err == nil {
+				cloneURL = absPath
+			}
+		}
+		
+		gitCmd := exec.Command("git", "clone", "--bare", cloneURL, repoPath)
 		gitCmd.Stdout = ctx.Writer
 		gitCmd.Stderr = ctx.Writer
 		if err := gitCmd.Run(); err != nil {
@@ -66,7 +76,7 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 		// Build a set of expected repositories
 		expectedRepos := make(map[string]bool)
 		for _, repoURL := range config.Repositories {
-			repoName := extractRepoName(repoURL)
+			repoName, _ := parseRepoURL(repoURL)
 			if repoName != "" {
 				expectedRepos[repoName] = true
 			}
@@ -97,21 +107,3 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 	return nil
 }
 
-func extractRepoName(repoURL string) string {
-	// Remove trailing .git if present
-	repoURL = strings.TrimSuffix(repoURL, ".git")
-
-	// Extract the last part of the URL path
-	parts := strings.Split(repoURL, "/")
-	if len(parts) < 2 {
-		return ""
-	}
-
-	repoName := parts[len(parts)-1]
-	if repoName == "" {
-		return ""
-	}
-
-	// Add .git suffix for bare repository
-	return repoName + ".git"
-}
