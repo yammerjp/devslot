@@ -121,7 +121,7 @@ func TestFindProjectRoot(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to get current directory: %v", err)
 		}
-		defer os.Chdir(oldWd)
+		defer func() { _ = os.Chdir(oldWd) }()
 
 		err = os.Chdir(tmpDir)
 		if err != nil {
@@ -158,7 +158,7 @@ func TestFindProjectRoot(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to get current directory: %v", err)
 		}
-		defer os.Chdir(oldWd)
+		defer func() { _ = os.Chdir(oldWd) }()
 
 		err = os.Chdir(subDir)
 		if err != nil {
@@ -184,7 +184,7 @@ func TestFindProjectRoot(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to get current directory: %v", err)
 		}
-		defer os.Chdir(oldWd)
+		defer func() { _ = os.Chdir(oldWd) }()
 
 		err = os.Chdir(tmpDir)
 		if err != nil {
@@ -204,4 +204,3 @@ func TestFindProjectRoot(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && s[:len(substr)] == substr || len(s) > len(substr) && contains(s[1:], substr)
 }
-

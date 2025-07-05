@@ -54,4 +54,3 @@ func parseRepoURL(repoURL string) (name string, isLocal bool) {
 
 	return "", isLocal
 }
-

@@ -52,4 +52,3 @@ func FindProjectRoot() (string, error) {
 
 	return "", fmt.Errorf("devslot.yaml not found in current directory or any parent directory")
 }
-

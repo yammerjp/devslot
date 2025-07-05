@@ -37,7 +37,7 @@ func TestFileLock(t *testing.T) {
 		if err != nil {
 			t.Errorf("First Lock() error = %v, want nil", err)
 		}
-		defer lock1.Unlock()
+		defer func() { _ = lock1.Unlock() }()
 
 		err = lock2.Lock()
 		if err == nil {
@@ -77,7 +77,7 @@ func TestFileLock(t *testing.T) {
 		if err != nil {
 			t.Errorf("Lock() error = %v, want nil", err)
 		}
-		defer lock.Unlock()
+		defer func() { _ = lock.Unlock() }()
 
 		lockPath := filepath.Join(tmpDir, ".devslot.lock")
 		content, err := os.ReadFile(lockPath)
@@ -90,4 +90,3 @@ func TestFileLock(t *testing.T) {
 		}
 	})
 }
-

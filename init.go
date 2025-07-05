@@ -20,7 +20,7 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 	if err := lock.Lock(); err != nil {
 		return err
 	}
-	defer lock.Unlock()
+	defer func() { _ = lock.Unlock() }()
 
 	// Load configuration
 	configPath := filepath.Join(projectRoot, "devslot.yaml")

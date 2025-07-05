@@ -39,11 +39,11 @@ func (l *FileLock) Lock() error {
 	// Write PID and timestamp to lock file
 	content := fmt.Sprintf("PID: %d\nTime: %s\n", os.Getpid(), time.Now().Format(time.RFC3339))
 	if err := file.Truncate(0); err != nil {
-		l.Unlock()
+		_ = l.Unlock()
 		return fmt.Errorf("failed to truncate lock file: %w", err)
 	}
 	if _, err := file.WriteAt([]byte(content), 0); err != nil {
-		l.Unlock()
+		_ = l.Unlock()
 		return fmt.Errorf("failed to write to lock file: %w", err)
 	}
 
@@ -67,4 +67,3 @@ func (l *FileLock) Unlock() error {
 	l.file = nil
 	return nil
 }
-

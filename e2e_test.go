@@ -189,7 +189,7 @@ repositories: []
 		if err := lock.Lock(); err != nil {
 			t.Fatalf("failed to acquire lock: %v", err)
 		}
-		defer lock.Unlock()
+		defer func() { _ = lock.Unlock() }()
 
 		// Try to run init while lock is held using App directly
 		var buf strings.Builder
