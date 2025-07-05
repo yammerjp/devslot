@@ -63,7 +63,7 @@ GitHub AppsはPATと比較して、より優れたセキュリティと管理機
    - App ID（App設定に表示）をメモ
    - リポジトリの Settings > Secrets and variables > Actions へ移動
    - シークレット`APP_PRIVATE_KEY`に.pemファイルの内容を追加
-   - 変数`APP_ID`にApp IDを追加
+   - シークレット`APP_ID`にApp IDを追加
 
 5. サンプルワークフローを使用:
    ```bash
