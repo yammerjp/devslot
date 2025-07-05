@@ -1,5 +1,5 @@
 .PHONY: all build build.binary build.install
-.PHONY: test test.all test.unit test.e2e test.coverage test.race
+.PHONY: test test.all test.unit test.e2e test.e2e.go test.e2e.zx test.coverage test.race
 .PHONY: check check.all check.format check.lint check.mod
 .PHONY: dev dev.run dev.clean dev.setup
 .PHONY: ci ci.setup ci.test ci.check
@@ -11,17 +11,20 @@ all: check.all build.binary
 ##@ Build
 
 BINARY_NAME := devslot
-VERSION := $(shell grep 'var version' main.go | cut -d'"' -f2)
+MAIN_PATH := ./cmd/devslot
+BUILD_DIR := ./build
+VERSION := $(shell grep 'var version' $(MAIN_PATH)/main.go | cut -d'"' -f2 || echo "dev")
 
 build: build.binary ## Alias for build.binary
 
 build.binary: ## Build the binary
 	@echo "Building $(BINARY_NAME)..."
-	@go build -o $(BINARY_NAME) .
+	@mkdir -p $(BUILD_DIR)
+	@go build -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 
 build.install: ## Install the binary to $GOPATH/bin
 	@echo "Installing $(BINARY_NAME)..."
-	@go install .
+	@go install $(MAIN_PATH)
 
 ##@ Test
 
@@ -33,16 +36,27 @@ test.unit: ## Run unit tests
 	@echo "Running unit tests..."
 	@go test -v ./...
 
-test.e2e: build.binary ## Run E2E tests using zx
-	@echo "Running E2E tests..."
+test.e2e: test.e2e.go ## Run E2E tests (Go implementation)
+
+test.e2e.go: build.binary ## Run E2E tests using Go
+	@echo "Running E2E tests (Go)..."
+	@go test -v -tags=e2e ./...
+
+test.e2e.zx: build.binary ## Run E2E tests using zx (legacy)
+	@echo "Running E2E tests (zx)..."
 	@echo "Note: Requires zx. Install with 'npm install -g zx' or use mise"
-	@zx test/e2e/init.test.mjs
+	@if [ -f test/e2e/init.test.mjs ]; then \
+		zx test/e2e/init.test.mjs; \
+	else \
+		echo "No zx E2E tests found"; \
+	fi
 
 test.coverage: ## Run tests with coverage report
 	@echo "Running tests with coverage..."
-	@go test -v -coverprofile=coverage.out ./...
-	@go tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report generated: coverage.html"
+	@mkdir -p $(BUILD_DIR)
+	@go test -v -coverprofile=$(BUILD_DIR)/coverage.out ./...
+	@go tool cover -html=$(BUILD_DIR)/coverage.out -o $(BUILD_DIR)/coverage.html
+	@echo "Coverage report generated: $(BUILD_DIR)/coverage.html"
 
 test.race: ## Run tests with race detector
 	@echo "Running tests with race detector..."
@@ -88,10 +102,11 @@ check.mod: ## Check go.mod tidiness
 dev: dev.run ## Alias for dev.run
 
 dev.run: build.binary ## Build and run the application
-	./$(BINARY_NAME)
+	$(BUILD_DIR)/$(BINARY_NAME)
 
 dev.clean: ## Clean build artifacts and test cache
 	@echo "Cleaning..."
+	@rm -rf $(BUILD_DIR)
 	@rm -f $(BINARY_NAME)
 	@rm -f coverage.out coverage.html
 	@go clean -testcache
@@ -103,7 +118,6 @@ dev.setup: ## Setup development environment
 		echo "Development tools installed via mise"; \
 	else \
 		echo "Please install mise first: https://mise.jdx.dev/getting-started.html"; \
-		exit 1; \
 	fi
 
 ##@ CI/CD
@@ -113,7 +127,9 @@ ci: ci.check ci.test ## Run CI pipeline locally
 ci.setup: ## Setup CI environment
 	@echo "Setting up CI environment..."
 	@go mod download
-	@npm install -g zx
+	@if [ -f test/e2e/init.test.mjs ]; then \
+		npm install -g zx; \
+	fi
 
 ci.test: test.unit test.e2e ## Run tests for CI
 

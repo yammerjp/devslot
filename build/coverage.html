@@ -1,0 +1,1372 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>devslot: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/yammerjp/devslot/cmd/devslot/main.go (69.2%)</option>
+				
+				<option value="file1">github.com/yammerjp/devslot/internal/command/boilerplate.go (85.7%)</option>
+				
+				<option value="file2">github.com/yammerjp/devslot/internal/command/create.go (0.0%)</option>
+				
+				<option value="file3">github.com/yammerjp/devslot/internal/command/destroy.go (0.0%)</option>
+				
+				<option value="file4">github.com/yammerjp/devslot/internal/command/doctor.go (0.0%)</option>
+				
+				<option value="file5">github.com/yammerjp/devslot/internal/command/init.go (0.0%)</option>
+				
+				<option value="file6">github.com/yammerjp/devslot/internal/command/list.go (0.0%)</option>
+				
+				<option value="file7">github.com/yammerjp/devslot/internal/command/reload.go (0.0%)</option>
+				
+				<option value="file8">github.com/yammerjp/devslot/internal/command/version.go (100.0%)</option>
+				
+				<option value="file9">github.com/yammerjp/devslot/internal/config/config.go (0.0%)</option>
+				
+				<option value="file10">github.com/yammerjp/devslot/internal/git/git.go (0.0%)</option>
+				
+				<option value="file11">github.com/yammerjp/devslot/internal/hook/hook.go (0.0%)</option>
+				
+				<option value="file12">github.com/yammerjp/devslot/internal/lock/lock.go (0.0%)</option>
+				
+				<option value="file13">github.com/yammerjp/devslot/internal/slot/slot.go (0.0%)</option>
+				
+				<option value="file14">github.com/yammerjp/devslot/internal/testutil/testutil.go (42.5%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "io"
+        "os"
+
+        "github.com/alecthomas/kong"
+        "github.com/yammerjp/devslot/internal/command"
+)
+
+type CLI struct {
+        Boilerplate command.BoilerplateCmd `cmd:"" help:"Create boilerplate structure for a new project"`
+        Init        command.InitCmd        `cmd:"" help:"Initialize the project by syncing bare repositories"`
+        Create      command.CreateCmd      `cmd:"" help:"Create a new slot"`
+        Destroy     command.DestroyCmd     `cmd:"" help:"Destroy an existing slot"`
+        Reload      command.ReloadCmd      `cmd:"" help:"Reload a slot to ensure all worktrees exist"`
+        List        command.ListCmd        `cmd:"" help:"List all existing slots"`
+        Doctor      command.DoctorCmd      `cmd:"" help:"Check project consistency and show diagnostics"`
+        Version     command.VersionCmd     `cmd:"" help:"Show version information"`
+}
+
+type App struct {
+        parser *kong.Kong
+        writer io.Writer
+}
+
+func NewApp(writer io.Writer) *App <span class="cov8" title="1">{
+        cli := &amp;CLI{}
+        parser, err := kong.New(cli,
+                kong.Name("devslot"),
+                kong.Description("A development environment manager for multi-repository worktrees"),
+                kong.UsageOnError(),
+                kong.ConfigureHelp(kong.HelpOptions{
+                        Compact: true,
+                }),
+                kong.Writers(writer, writer),
+                kong.Exit(func(int) </span>{<span class="cov8" title="1">}</span>), // Override exit for testing
+        )
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+
+        <span class="cov8" title="1">return &amp;App{
+                parser: parser,
+                writer: writer,
+        }</span>
+}
+
+func (app *App) Run(args []string) error <span class="cov8" title="1">{
+        ctx, err := app.parser.Parse(args)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">cmdCtx := &amp;command.Context{
+                Writer: app.writer,
+        }
+
+        return ctx.Run(cmdCtx)</span>
+}
+
+func main() <span class="cov0" title="0">{
+        app := NewApp(os.Stdout)
+        if err := app.Run(os.Args[1:]); err != nil </span><span class="cov0" title="0">{
+                app.parser.FatalIfErrorf(err)
+        }</span>
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package command
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+)
+
+type BoilerplateCmd struct{}
+
+func (c *BoilerplateCmd) Run(ctx *Context) error <span class="cov8" title="1">{
+        currentDir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %w", err)
+        }</span>
+
+        // Create directories
+        <span class="cov8" title="1">directories := []string{
+                "hooks",
+                "repos",
+                "slots",
+        }
+
+        for _, dir := range directories </span><span class="cov8" title="1">{
+                dirPath := filepath.Join(currentDir, dir)
+                if err := os.MkdirAll(dirPath, 0755); err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to create directory %s: %w", dir, err)
+                }</span>
+                <span class="cov8" title="1">fmt.Fprintf(ctx.Writer, "Created directory: %s\n", dir)</span>
+        }
+
+        // Create devslot.yaml
+        <span class="cov8" title="1">devslotYamlPath := filepath.Join(currentDir, "devslot.yaml")
+        devslotYamlContent := `# devslot configuration file
+repositories:
+  # Add your repositories here
+  # Example:
+  # - name: my-app
+  #   url: https://github.com/myorg/my-app.git
+  # - name: my-lib
+  #   url: https://github.com/myorg/my-lib.git
+`
+        if err := createFileIfNotExists(devslotYamlPath, devslotYamlContent); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create devslot.yaml: %w", err)
+        }</span>
+        <span class="cov8" title="1">fmt.Fprintf(ctx.Writer, "Created file: devslot.yaml\n")
+
+        // Create .gitignore
+        gitignorePath := filepath.Join(currentDir, ".gitignore")
+        gitignoreContent := `# devslot directories
+/repos/
+/slots/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+`
+        if err := createOrAppendToFile(gitignorePath, gitignoreContent); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to update .gitignore: %w", err)
+        }</span>
+        <span class="cov8" title="1">fmt.Fprintf(ctx.Writer, "Updated file: .gitignore\n")
+
+        // Create hook examples
+        hookExamples := map[string]string{
+                "post-create": `#!/bin/bash
+# This hook is called after a new slot is created
+# Environment variables:
+#   DEVSLOT_SLOT: The name of the slot
+#   DEVSLOT_PROJECT_ROOT: The root directory of the project
+
+echo "Slot $DEVSLOT_SLOT has been created!"
+
+# Example: Install dependencies for each repository
+# for repo in "$DEVSLOT_PROJECT_ROOT/slots/$DEVSLOT_SLOT"/*; do
+#     if [ -f "$repo/package.json" ]; then
+#         echo "Installing npm dependencies in $(basename "$repo")..."
+#         (cd "$repo" &amp;&amp; npm install)
+#     fi
+# done
+`,
+                "pre-destroy": `#!/bin/bash
+# This hook is called before a slot is destroyed
+# Environment variables:
+#   DEVSLOT_SLOT: The name of the slot
+#   DEVSLOT_PROJECT_ROOT: The root directory of the project
+
+echo "Slot $DEVSLOT_SLOT will be destroyed!"
+
+# Example: Backup important files
+# backup_dir="$DEVSLOT_PROJECT_ROOT/backups/$DEVSLOT_SLOT-$(date +%Y%m%d-%H%M%S)"
+# mkdir -p "$backup_dir"
+# echo "Backing up slot to $backup_dir..."
+`,
+                "post-reload": `#!/bin/bash
+# This hook is called after a slot is reloaded
+# Environment variables:
+#   DEVSLOT_SLOT: The name of the slot
+#   DEVSLOT_PROJECT_ROOT: The root directory of the project
+
+echo "Slot $DEVSLOT_SLOT has been reloaded!"
+
+# Example: Sync dependencies or update configurations
+# echo "Updating dependencies..."
+`,
+        }
+
+        for hookName, content := range hookExamples </span><span class="cov8" title="1">{
+                hookPath := filepath.Join(currentDir, "hooks", hookName+".example")
+                if err := createFileIfNotExists(hookPath, content); err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to create hook example %s: %w", hookName, err)
+                }</span>
+                <span class="cov8" title="1">fmt.Fprintf(ctx.Writer, "Created hook example: hooks/%s.example\n", hookName)</span>
+        }
+
+        <span class="cov8" title="1">fmt.Fprintln(ctx.Writer, "\nBoilerplate project structure created successfully!")
+        fmt.Fprintln(ctx.Writer, "Next steps:")
+        fmt.Fprintln(ctx.Writer, "1. Edit devslot.yaml to add your repositories")
+        fmt.Fprintln(ctx.Writer, "2. Run 'devslot init' to clone the repositories")
+        fmt.Fprintln(ctx.Writer, "3. Create your first slot with 'devslot create &lt;slot-name&gt;'")
+
+        return nil</span>
+}
+
+func createFileIfNotExists(path, content string) error <span class="cov8" title="1">{
+        if _, err := os.Stat(path); err == nil </span><span class="cov8" title="1">{
+                return nil // File already exists
+        }</span>
+
+        <span class="cov8" title="1">return os.WriteFile(path, []byte(content), 0644)</span>
+}
+
+func createOrAppendToFile(path, content string) error <span class="cov8" title="1">{
+        // Check if file exists
+        existingContent := ""
+        if data, err := os.ReadFile(path); err == nil </span><span class="cov8" title="1">{
+                existingContent = string(data)
+        }</span>
+
+        // Check if devslot entries already exist
+        <span class="cov8" title="1">if contains(existingContent, "/repos/") &amp;&amp; contains(existingContent, "/slots/") </span><span class="cov8" title="1">{
+                return nil // Already configured
+        }</span>
+
+        // Append to existing content or create new
+        <span class="cov8" title="1">var finalContent string
+        if existingContent != "" </span><span class="cov8" title="1">{
+                finalContent = existingContent
+                if len(existingContent) &gt; 0 &amp;&amp; existingContent[len(existingContent)-1] != '\n' </span><span class="cov0" title="0">{
+                        finalContent += "\n"
+                }</span>
+                <span class="cov8" title="1">finalContent += "\n" + content</span>
+        } else<span class="cov8" title="1"> {
+                finalContent = content
+        }</span>
+
+        <span class="cov8" title="1">return os.WriteFile(path, []byte(finalContent), 0644)</span>
+}
+
+func contains(s, substr string) bool <span class="cov8" title="1">{
+        return len(s) &gt;= len(substr) &amp;&amp; containsHelper(s, substr)
+}</span>
+
+func containsHelper(s, substr string) bool <span class="cov8" title="1">{
+        if len(substr) == 0 </span><span class="cov0" title="0">{
+                return true
+        }</span>
+        <span class="cov8" title="1">if len(s) &lt; len(substr) </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov8" title="1">for i := 0; i &lt;= len(s)-len(substr); i++ </span><span class="cov8" title="1">{
+                if s[i:i+len(substr)] == substr </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package command
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "github.com/yammerjp/devslot/internal/config"
+        "github.com/yammerjp/devslot/internal/lock"
+        "github.com/yammerjp/devslot/internal/slot"
+)
+
+type CreateCmd struct {
+        SlotName string `arg:"" help:"Name of the slot to create"`
+}
+
+func (c *CreateCmd) Run(ctx *Context) error <span class="cov0" title="0">{
+        // Find project root
+        currentDir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">projectRoot, err := config.FindProjectRoot(currentDir)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("not in a devslot project: %w", err)
+        }</span>
+
+        // Acquire lock
+        <span class="cov0" title="0">lockFile := lock.New(filepath.Join(projectRoot, ".devslot.lock"))
+        if err := lockFile.Acquire(); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to acquire lock: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer lockFile.Release()
+
+        // Load configuration
+        cfg, err := config.Load(projectRoot)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to load configuration: %w", err)
+        }</span>
+
+        // Create slot
+        <span class="cov0" title="0">mgr := slot.NewManager(projectRoot)
+        fmt.Fprintf(ctx.Writer, "Creating slot '%s'...\n", c.SlotName)
+        
+        if err := mgr.Create(c.SlotName, cfg); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create slot: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">fmt.Fprintf(ctx.Writer, "Slot '%s' created successfully!\n", c.SlotName)
+        fmt.Fprintf(ctx.Writer, "You can now work in: %s/slots/%s\n", projectRoot, c.SlotName)
+
+        return nil</span>
+}</pre>
+		
+		<pre class="file" id="file3" style="display: none">package command
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "github.com/yammerjp/devslot/internal/config"
+        "github.com/yammerjp/devslot/internal/lock"
+        "github.com/yammerjp/devslot/internal/slot"
+)
+
+type DestroyCmd struct {
+        SlotName string `arg:"" help:"Name of the slot to destroy"`
+}
+
+func (c *DestroyCmd) Run(ctx *Context) error <span class="cov0" title="0">{
+        // Find project root
+        currentDir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">projectRoot, err := config.FindProjectRoot(currentDir)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("not in a devslot project: %w", err)
+        }</span>
+
+        // Acquire lock
+        <span class="cov0" title="0">lockFile := lock.New(filepath.Join(projectRoot, ".devslot.lock"))
+        if err := lockFile.Acquire(); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to acquire lock: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer lockFile.Release()
+
+        // Destroy slot
+        mgr := slot.NewManager(projectRoot)
+        fmt.Fprintf(ctx.Writer, "Destroying slot '%s'...\n", c.SlotName)
+        
+        if err := mgr.Destroy(c.SlotName); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to destroy slot: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">fmt.Fprintf(ctx.Writer, "Slot '%s' destroyed successfully!\n", c.SlotName)
+
+        return nil</span>
+}</pre>
+		
+		<pre class="file" id="file4" style="display: none">package command
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+
+        "github.com/yammerjp/devslot/internal/config"
+        "github.com/yammerjp/devslot/internal/git"
+)
+
+type DoctorCmd struct{}
+
+func (c *DoctorCmd) Run(ctx *Context) error <span class="cov0" title="0">{
+        // Find project root
+        currentDir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">projectRoot, err := config.FindProjectRoot(currentDir)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("not in a devslot project: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">fmt.Fprintln(ctx.Writer, "Running devslot doctor...")
+        fmt.Fprintf(ctx.Writer, "Project root: %s\n\n", projectRoot)
+
+        hasIssues := false
+
+        // Check configuration
+        fmt.Fprintln(ctx.Writer, "Checking configuration...")
+        cfg, err := config.Load(projectRoot)
+        if err != nil </span><span class="cov0" title="0">{
+                fmt.Fprintf(ctx.Writer, "  ❌ Failed to load devslot.yaml: %v\n", err)
+                hasIssues = true
+        }</span> else<span class="cov0" title="0"> {
+                fmt.Fprintln(ctx.Writer, "  ✅ devslot.yaml is valid")
+                fmt.Fprintf(ctx.Writer, "  📦 Found %d repositories\n", len(cfg.Repositories))
+        }</span>
+
+        // Check directories
+        <span class="cov0" title="0">fmt.Fprintln(ctx.Writer, "\nChecking directories...")
+        dirs := []string{"hooks", "repos", "slots"}
+        for _, dir := range dirs </span><span class="cov0" title="0">{
+                dirPath := filepath.Join(projectRoot, dir)
+                if info, err := os.Stat(dirPath); err != nil </span><span class="cov0" title="0">{
+                        fmt.Fprintf(ctx.Writer, "  ❌ Directory %s does not exist\n", dir)
+                        hasIssues = true
+                }</span> else<span class="cov0" title="0"> if !info.IsDir() </span><span class="cov0" title="0">{
+                        fmt.Fprintf(ctx.Writer, "  ❌ %s is not a directory\n", dir)
+                        hasIssues = true
+                }</span> else<span class="cov0" title="0"> {
+                        fmt.Fprintf(ctx.Writer, "  ✅ Directory %s exists\n", dir)
+                }</span>
+        }
+
+        // Check repositories
+        <span class="cov0" title="0">if cfg != nil </span><span class="cov0" title="0">{
+                fmt.Fprintln(ctx.Writer, "\nChecking repositories...")
+                for _, repo := range cfg.Repositories </span><span class="cov0" title="0">{
+                        bareRepoPath := filepath.Join(projectRoot, "repos", repo.Name)
+                        if git.IsValidRepository(bareRepoPath) </span><span class="cov0" title="0">{
+                                fmt.Fprintf(ctx.Writer, "  ✅ Repository %s is cloned\n", repo.Name)
+                        }</span> else<span class="cov0" title="0"> {
+                                fmt.Fprintf(ctx.Writer, "  ❌ Repository %s is not cloned (run 'devslot init')\n", repo.Name)
+                                hasIssues = true
+                        }</span>
+                }
+        }
+
+        // Check hooks
+        <span class="cov0" title="0">fmt.Fprintln(ctx.Writer, "\nChecking hooks...")
+        hooks := []string{"post-create", "pre-destroy", "post-reload"}
+        for _, hookName := range hooks </span><span class="cov0" title="0">{
+                hookPath := filepath.Join(projectRoot, "hooks", hookName)
+                if info, err := os.Stat(hookPath); err == nil </span><span class="cov0" title="0">{
+                        if info.Mode().Perm()&amp;0111 != 0 </span><span class="cov0" title="0">{
+                                fmt.Fprintf(ctx.Writer, "  ✅ Hook %s exists and is executable\n", hookName)
+                        }</span> else<span class="cov0" title="0"> {
+                                fmt.Fprintf(ctx.Writer, "  ⚠️  Hook %s exists but is not executable\n", hookName)
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        fmt.Fprintf(ctx.Writer, "  ℹ️  Hook %s not found (optional)\n", hookName)
+                }</span>
+        }
+
+        // Summary
+        <span class="cov0" title="0">fmt.Fprintln(ctx.Writer, "\n" + strings.Repeat("-", 40))
+        if hasIssues </span><span class="cov0" title="0">{
+                fmt.Fprintln(ctx.Writer, "❌ Some issues were found. Please fix them before continuing.")
+                return fmt.Errorf("doctor check failed")
+        }</span> else<span class="cov0" title="0"> {
+                fmt.Fprintln(ctx.Writer, "✅ Everything looks good!")
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}</pre>
+		
+		<pre class="file" id="file5" style="display: none">package command
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "github.com/yammerjp/devslot/internal/config"
+        "github.com/yammerjp/devslot/internal/git"
+)
+
+type InitCmd struct{}
+
+func (c *InitCmd) Run(ctx *Context) error <span class="cov0" title="0">{
+        // Find project root
+        currentDir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">projectRoot, err := config.FindProjectRoot(currentDir)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("not in a devslot project: %w", err)
+        }</span>
+
+        // Load configuration
+        <span class="cov0" title="0">cfg, err := config.Load(projectRoot)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to load configuration: %w", err)
+        }</span>
+
+        // Create repos directory if it doesn't exist
+        <span class="cov0" title="0">reposDir := filepath.Join(projectRoot, "repos")
+        if err := os.MkdirAll(reposDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create repos directory: %w", err)
+        }</span>
+
+        // Clone each repository as bare
+        <span class="cov0" title="0">for _, repo := range cfg.Repositories </span><span class="cov0" title="0">{
+                bareRepoPath := filepath.Join(reposDir, repo.Name)
+                
+                // Check if repository already exists
+                if git.IsValidRepository(bareRepoPath) </span><span class="cov0" title="0">{
+                        fmt.Fprintf(ctx.Writer, "Repository %s already exists, skipping...\n", repo.Name)
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">fmt.Fprintf(ctx.Writer, "Cloning %s from %s...\n", repo.Name, repo.URL)
+                if err := git.CloneBare(repo.URL, bareRepoPath); err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to clone %s: %w", repo.Name, err)
+                }</span>
+                <span class="cov0" title="0">fmt.Fprintf(ctx.Writer, "Successfully cloned %s\n", repo.Name)</span>
+        }
+
+        <span class="cov0" title="0">fmt.Fprintln(ctx.Writer, "\nInitialization complete!")
+        fmt.Fprintln(ctx.Writer, "You can now create a slot with 'devslot create &lt;slot-name&gt;'")
+
+        return nil</span>
+}</pre>
+		
+		<pre class="file" id="file6" style="display: none">package command
+
+import (
+        "fmt"
+        "os"
+
+        "github.com/yammerjp/devslot/internal/config"
+        "github.com/yammerjp/devslot/internal/slot"
+)
+
+type ListCmd struct{}
+
+func (c *ListCmd) Run(ctx *Context) error <span class="cov0" title="0">{
+        // Find project root
+        currentDir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">projectRoot, err := config.FindProjectRoot(currentDir)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("not in a devslot project: %w", err)
+        }</span>
+
+        // List slots
+        <span class="cov0" title="0">mgr := slot.NewManager(projectRoot)
+        slots, err := mgr.List()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to list slots: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if len(slots) == 0 </span><span class="cov0" title="0">{
+                fmt.Fprintln(ctx.Writer, "No slots found.")
+                fmt.Fprintln(ctx.Writer, "Create a new slot with 'devslot create &lt;slot-name&gt;'")
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">fmt.Fprintln(ctx.Writer, "Available slots:")
+        for _, slotName := range slots </span><span class="cov0" title="0">{
+                fmt.Fprintf(ctx.Writer, "  - %s\n", slotName)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}</pre>
+		
+		<pre class="file" id="file7" style="display: none">package command
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "github.com/yammerjp/devslot/internal/config"
+        "github.com/yammerjp/devslot/internal/lock"
+        "github.com/yammerjp/devslot/internal/slot"
+)
+
+type ReloadCmd struct {
+        SlotName string `arg:"" help:"Name of the slot to reload"`
+}
+
+func (c *ReloadCmd) Run(ctx *Context) error <span class="cov0" title="0">{
+        // Find project root
+        currentDir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">projectRoot, err := config.FindProjectRoot(currentDir)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("not in a devslot project: %w", err)
+        }</span>
+
+        // Acquire lock
+        <span class="cov0" title="0">lockFile := lock.New(filepath.Join(projectRoot, ".devslot.lock"))
+        if err := lockFile.Acquire(); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to acquire lock: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer lockFile.Release()
+
+        // Load configuration
+        cfg, err := config.Load(projectRoot)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to load configuration: %w", err)
+        }</span>
+
+        // Reload slot
+        <span class="cov0" title="0">mgr := slot.NewManager(projectRoot)
+        fmt.Fprintf(ctx.Writer, "Reloading slot '%s'...\n", c.SlotName)
+        
+        if err := mgr.Reload(c.SlotName, cfg); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to reload slot: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">fmt.Fprintf(ctx.Writer, "Slot '%s' reloaded successfully!\n", c.SlotName)
+
+        return nil</span>
+}</pre>
+		
+		<pre class="file" id="file8" style="display: none">package command
+
+import "fmt"
+
+var version = "dev"
+
+type VersionCmd struct{}
+
+func (c *VersionCmd) Run(ctx *Context) error <span class="cov8" title="1">{
+        fmt.Fprintf(ctx.Writer, "devslot version %s\n", version)
+        return nil
+}</pre>
+		
+		<pre class="file" id="file9" style="display: none">package config
+
+import (
+        "errors"
+        "os"
+        "path/filepath"
+
+        "gopkg.in/yaml.v3"
+)
+
+// Config represents the devslot.yaml configuration
+type Config struct {
+        Repositories []Repository `yaml:"repositories"`
+}
+
+// Repository represents a single repository in the configuration
+type Repository struct {
+        Name string `yaml:"name"`
+        URL  string `yaml:"url"`
+}
+
+// Load reads and parses the devslot.yaml configuration file
+func Load(rootPath string) (*Config, error) <span class="cov0" title="0">{
+        configPath := filepath.Join(rootPath, "devslot.yaml")
+        data, err := os.ReadFile(configPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">var config Config
+        if err := yaml.Unmarshal(data, &amp;config); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;config, nil</span>
+}
+
+// FindProjectRoot searches for the project root containing devslot.yaml
+func FindProjectRoot(startPath string) (string, error) <span class="cov0" title="0">{
+        currentPath := startPath
+        for </span><span class="cov0" title="0">{
+                configPath := filepath.Join(currentPath, "devslot.yaml")
+                if _, err := os.Stat(configPath); err == nil </span><span class="cov0" title="0">{
+                        return currentPath, nil
+                }</span>
+
+                <span class="cov0" title="0">parent := filepath.Dir(currentPath)
+                if parent == currentPath </span><span class="cov0" title="0">{
+                        return "", errors.New("devslot.yaml not found in any parent directory")
+                }</span>
+                <span class="cov0" title="0">currentPath = parent</span>
+        }
+}</pre>
+		
+		<pre class="file" id="file10" style="display: none">package git
+
+import (
+        "fmt"
+        "os"
+        "os/exec"
+        "path/filepath"
+)
+
+// CloneBare clones a repository as a bare repository
+func CloneBare(url, destPath string) error <span class="cov0" title="0">{
+        cmd := exec.Command("git", "clone", "--bare", url, destPath)
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        return cmd.Run()
+}</span>
+
+// CreateWorktree creates a new worktree for a bare repository
+func CreateWorktree(bareRepoPath, worktreePath, branch string) error <span class="cov0" title="0">{
+        cmd := exec.Command("git", "-C", bareRepoPath, "worktree", "add", worktreePath, branch)
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        return cmd.Run()
+}</span>
+
+// RemoveWorktree removes a worktree
+func RemoveWorktree(bareRepoPath, worktreePath string) error <span class="cov0" title="0">{
+        cmd := exec.Command("git", "-C", bareRepoPath, "worktree", "remove", worktreePath)
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        return cmd.Run()
+}</span>
+
+// ListWorktrees lists all worktrees for a bare repository
+func ListWorktrees(bareRepoPath string) ([]string, error) <span class="cov0" title="0">{
+        cmd := exec.Command("git", "-C", bareRepoPath, "worktree", "list", "--porcelain")
+        output, err := cmd.Output()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // Parse the output to extract worktree paths
+        // This is a simplified implementation
+        <span class="cov0" title="0">worktrees := []string{}
+        lines := string(output)
+        // TODO: Implement proper parsing
+        _ = lines
+        return worktrees, nil</span>
+}
+
+// IsValidRepository checks if a path is a valid git repository
+func IsValidRepository(path string) bool <span class="cov0" title="0">{
+        gitDir := filepath.Join(path, ".git")
+        if _, err := os.Stat(gitDir); err == nil </span><span class="cov0" title="0">{
+                return true
+        }</span>
+
+        // Check if it's a bare repository
+        <span class="cov0" title="0">cmd := exec.Command("git", "-C", path, "rev-parse", "--is-bare-repository")
+        output, err := cmd.Output()
+        if err != nil </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        <span class="cov0" title="0">return string(output) == "true\n"</span>
+}
+
+// GetCurrentBranch returns the current branch name
+func GetCurrentBranch(repoPath string) (string, error) <span class="cov0" title="0">{
+        cmd := exec.Command("git", "-C", repoPath, "branch", "--show-current")
+        output, err := cmd.Output()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to get current branch: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">branch := string(output)
+        if len(branch) &gt; 0 &amp;&amp; branch[len(branch)-1] == '\n' </span><span class="cov0" title="0">{
+                branch = branch[:len(branch)-1]
+        }</span>
+
+        <span class="cov0" title="0">return branch, nil</span>
+}</pre>
+		
+		<pre class="file" id="file11" style="display: none">package hook
+
+import (
+        "fmt"
+        "os"
+        "os/exec"
+        "path/filepath"
+)
+
+// Type represents the type of hook
+type Type string
+
+const (
+        PostCreate Type = "post-create"
+        PreDestroy Type = "pre-destroy"
+        PostReload Type = "post-reload"
+)
+
+// Runner executes hooks
+type Runner struct {
+        projectRoot string
+}
+
+// NewRunner creates a new hook runner
+func NewRunner(projectRoot string) *Runner <span class="cov0" title="0">{
+        return &amp;Runner{
+                projectRoot: projectRoot,
+        }
+}</span>
+
+// Run executes a hook if it exists
+func (r *Runner) Run(hookType Type, slotName string, env map[string]string) error <span class="cov0" title="0">{
+        hookPath := filepath.Join(r.projectRoot, "hooks", string(hookType))
+        
+        // Check if hook exists and is executable
+        info, err := os.Stat(hookPath)
+        if err != nil </span><span class="cov0" title="0">{
+                if os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        // Hook doesn't exist, which is fine
+                        return nil
+                }</span>
+                <span class="cov0" title="0">return fmt.Errorf("failed to stat hook %s: %w", hookType, err)</span>
+        }
+        
+        // Check if file is executable
+        <span class="cov0" title="0">if info.Mode().Perm()&amp;0111 == 0 </span><span class="cov0" title="0">{
+                return fmt.Errorf("hook %s is not executable", hookType)
+        }</span>
+        
+        // Prepare command
+        <span class="cov0" title="0">cmd := exec.Command(hookPath)
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        
+        // Set environment variables
+        cmd.Env = os.Environ()
+        cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_SLOT=%s", slotName))
+        cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_PROJECT_ROOT=%s", r.projectRoot))
+        
+        // Add custom environment variables
+        for k, v := range env </span><span class="cov0" title="0">{
+                cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+        }</span>
+        
+        // Execute hook
+        <span class="cov0" title="0">if err := cmd.Run(); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("hook %s failed: %w", hookType, err)
+        }</span>
+        
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Exists checks if a hook exists
+func (r *Runner) Exists(hookType Type) bool <span class="cov0" title="0">{
+        hookPath := filepath.Join(r.projectRoot, "hooks", string(hookType))
+        info, err := os.Stat(hookPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        
+        // Check if it's a regular file and executable
+        <span class="cov0" title="0">return info.Mode().IsRegular() &amp;&amp; info.Mode().Perm()&amp;0111 != 0</span>
+}</pre>
+		
+		<pre class="file" id="file12" style="display: none">package lock
+
+import (
+        "errors"
+        "fmt"
+        "os"
+        "path/filepath"
+        "time"
+)
+
+// FileLock represents a file-based lock
+type FileLock struct {
+        path string
+        file *os.File
+}
+
+// New creates a new file lock
+func New(lockPath string) *FileLock <span class="cov0" title="0">{
+        return &amp;FileLock{
+                path: lockPath,
+        }
+}</span>
+
+// Acquire attempts to acquire the lock
+func (l *FileLock) Acquire() error <span class="cov0" title="0">{
+        dir := filepath.Dir(l.path)
+        if err := os.MkdirAll(dir, 0755); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create lock directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">file, err := os.OpenFile(l.path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+        if err != nil </span><span class="cov0" title="0">{
+                if os.IsExist(err) </span><span class="cov0" title="0">{
+                        return errors.New("lock is already held")
+                }</span>
+                <span class="cov0" title="0">return fmt.Errorf("failed to acquire lock: %w", err)</span>
+        }
+
+        <span class="cov0" title="0">l.file = file
+        
+        // Write lock information
+        lockInfo := fmt.Sprintf("PID: %d\nTime: %s\n", os.Getpid(), time.Now().Format(time.RFC3339))
+        if _, err := file.WriteString(lockInfo); err != nil </span><span class="cov0" title="0">{
+                file.Close()
+                os.Remove(l.path)
+                return fmt.Errorf("failed to write lock info: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Release releases the lock
+func (l *FileLock) Release() error <span class="cov0" title="0">{
+        if l.file == nil </span><span class="cov0" title="0">{
+                return errors.New("lock not held")
+        }</span>
+
+        <span class="cov0" title="0">if err := l.file.Close(); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to close lock file: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := os.Remove(l.path); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to remove lock file: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">l.file = nil
+        return nil</span>
+}
+
+// TryAcquire attempts to acquire the lock with a timeout
+func (l *FileLock) TryAcquire(timeout time.Duration) error <span class="cov0" title="0">{
+        deadline := time.Now().Add(timeout)
+        
+        for time.Now().Before(deadline) </span><span class="cov0" title="0">{
+                err := l.Acquire()
+                if err == nil </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+                
+                <span class="cov0" title="0">if !errors.Is(err, os.ErrExist) </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+                
+                <span class="cov0" title="0">time.Sleep(100 * time.Millisecond)</span>
+        }
+        
+        <span class="cov0" title="0">return errors.New("failed to acquire lock within timeout")</span>
+}
+
+// IsLocked checks if the lock is currently held
+func (l *FileLock) IsLocked() bool <span class="cov0" title="0">{
+        _, err := os.Stat(l.path)
+        return err == nil
+}</pre>
+		
+		<pre class="file" id="file13" style="display: none">package slot
+
+import (
+        "errors"
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+
+        "github.com/yammerjp/devslot/internal/config"
+        "github.com/yammerjp/devslot/internal/git"
+        "github.com/yammerjp/devslot/internal/hook"
+)
+
+// Manager manages slots
+type Manager struct {
+        projectRoot string
+        hookRunner  *hook.Runner
+}
+
+// NewManager creates a new slot manager
+func NewManager(projectRoot string) *Manager <span class="cov0" title="0">{
+        return &amp;Manager{
+                projectRoot: projectRoot,
+                hookRunner:  hook.NewRunner(projectRoot),
+        }
+}</span>
+
+// Create creates a new slot
+func (m *Manager) Create(name string, cfg *config.Config) error <span class="cov0" title="0">{
+        if err := m.validateSlotName(name); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">slotPath := m.getSlotPath(name)
+        if _, err := os.Stat(slotPath); err == nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("slot %s already exists", name)
+        }</span>
+
+        // Create slot directory
+        <span class="cov0" title="0">if err := os.MkdirAll(slotPath, 0755); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create slot directory: %w", err)
+        }</span>
+
+        // Create worktrees for each repository
+        <span class="cov0" title="0">for _, repo := range cfg.Repositories </span><span class="cov0" title="0">{
+                bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.Name)
+                worktreePath := filepath.Join(slotPath, repo.Name)
+
+                // Ensure bare repository exists
+                if !git.IsValidRepository(bareRepoPath) </span><span class="cov0" title="0">{
+                        return fmt.Errorf("bare repository %s does not exist", repo.Name)
+                }</span>
+
+                // Create worktree
+                <span class="cov0" title="0">if err := git.CreateWorktree(bareRepoPath, worktreePath, "main"); err != nil </span><span class="cov0" title="0">{
+                        // Cleanup on failure
+                        os.RemoveAll(slotPath)
+                        return fmt.Errorf("failed to create worktree for %s: %w", repo.Name, err)
+                }</span>
+        }
+
+        // Run post-create hook
+        <span class="cov0" title="0">if err := m.hookRunner.Run(hook.PostCreate, name, nil); err != nil </span><span class="cov0" title="0">{
+                // Cleanup on hook failure
+                m.Destroy(name)
+                return fmt.Errorf("post-create hook failed: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Destroy removes a slot
+func (m *Manager) Destroy(name string) error <span class="cov0" title="0">{
+        slotPath := m.getSlotPath(name)
+        if _, err := os.Stat(slotPath); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                return fmt.Errorf("slot %s does not exist", name)
+        }</span>
+
+        // Run pre-destroy hook
+        <span class="cov0" title="0">if err := m.hookRunner.Run(hook.PreDestroy, name, nil); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("pre-destroy hook failed: %w", err)
+        }</span>
+
+        // Remove worktrees
+        <span class="cov0" title="0">entries, err := os.ReadDir(slotPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to read slot directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">for _, entry := range entries </span><span class="cov0" title="0">{
+                if !entry.IsDir() </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">bareRepoPath := filepath.Join(m.projectRoot, "repos", entry.Name())
+                worktreePath := filepath.Join(slotPath, entry.Name())
+
+                if git.IsValidRepository(bareRepoPath) </span><span class="cov0" title="0">{
+                        if err := git.RemoveWorktree(bareRepoPath, worktreePath); err != nil </span><span class="cov0" title="0">{
+                                // Continue with other worktrees even if one fails
+                                fmt.Fprintf(os.Stderr, "Warning: failed to remove worktree %s: %v\n", entry.Name(), err)
+                        }</span>
+                }
+        }
+
+        // Remove slot directory
+        <span class="cov0" title="0">if err := os.RemoveAll(slotPath); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to remove slot directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// List returns all existing slots
+func (m *Manager) List() ([]string, error) <span class="cov0" title="0">{
+        slotsPath := filepath.Join(m.projectRoot, "slots")
+        
+        entries, err := os.ReadDir(slotsPath)
+        if err != nil </span><span class="cov0" title="0">{
+                if os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        return []string{}, nil
+                }</span>
+                <span class="cov0" title="0">return nil, fmt.Errorf("failed to read slots directory: %w", err)</span>
+        }
+
+        <span class="cov0" title="0">slots := []string{}
+        for _, entry := range entries </span><span class="cov0" title="0">{
+                if entry.IsDir() </span><span class="cov0" title="0">{
+                        slots = append(slots, entry.Name())
+                }</span>
+        }
+
+        <span class="cov0" title="0">return slots, nil</span>
+}
+
+// Reload ensures all worktrees exist for a slot
+func (m *Manager) Reload(name string, cfg *config.Config) error <span class="cov0" title="0">{
+        slotPath := m.getSlotPath(name)
+        if _, err := os.Stat(slotPath); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                return fmt.Errorf("slot %s does not exist", name)
+        }</span>
+
+        // Check each repository
+        <span class="cov0" title="0">for _, repo := range cfg.Repositories </span><span class="cov0" title="0">{
+                bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.Name)
+                worktreePath := filepath.Join(slotPath, repo.Name)
+
+                // Check if worktree exists
+                if _, err := os.Stat(worktreePath); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        // Create missing worktree
+                        if err := git.CreateWorktree(bareRepoPath, worktreePath, "main"); err != nil </span><span class="cov0" title="0">{
+                                return fmt.Errorf("failed to create worktree for %s: %w", repo.Name, err)
+                        }</span>
+                }
+        }
+
+        // Run post-reload hook
+        <span class="cov0" title="0">if err := m.hookRunner.Run(hook.PostReload, name, nil); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("post-reload hook failed: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// getSlotPath returns the path for a slot
+func (m *Manager) getSlotPath(name string) string <span class="cov0" title="0">{
+        return filepath.Join(m.projectRoot, "slots", name)
+}</span>
+
+// validateSlotName validates the slot name
+func (m *Manager) validateSlotName(name string) error <span class="cov0" title="0">{
+        if name == "" </span><span class="cov0" title="0">{
+                return errors.New("slot name cannot be empty")
+        }</span>
+
+        <span class="cov0" title="0">if strings.Contains(name, "/") || strings.Contains(name, "\\") </span><span class="cov0" title="0">{
+                return errors.New("slot name cannot contain path separators")
+        }</span>
+
+        <span class="cov0" title="0">if name == "." || name == ".." </span><span class="cov0" title="0">{
+                return errors.New("invalid slot name")
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}</pre>
+		
+		<pre class="file" id="file14" style="display: none">package testutil
+
+import (
+        "os"
+        "path/filepath"
+        "testing"
+)
+
+// TempDir creates a temporary directory for testing
+func TempDir(t *testing.T) string <span class="cov8" title="1">{
+        t.Helper()
+        
+        dir, err := os.MkdirTemp("", "devslot-test-*")
+        if err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to create temp dir: %v", err)
+        }</span>
+        
+        <span class="cov8" title="1">t.Cleanup(func() </span><span class="cov8" title="1">{
+                os.RemoveAll(dir)
+        }</span>)
+        
+        <span class="cov8" title="1">return dir</span>
+}
+
+// CreateFile creates a file with the given content
+func CreateFile(t *testing.T, path, content string) <span class="cov8" title="1">{
+        t.Helper()
+        
+        dir := filepath.Dir(path)
+        if err := os.MkdirAll(dir, 0755); err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to create directory %s: %v", dir, err)
+        }</span>
+        
+        <span class="cov8" title="1">if err := os.WriteFile(path, []byte(content), 0644); err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to create file %s: %v", path, err)
+        }</span>
+}
+
+// CreateExecutable creates an executable file
+func CreateExecutable(t *testing.T, path, content string) <span class="cov0" title="0">{
+        t.Helper()
+        
+        dir := filepath.Dir(path)
+        if err := os.MkdirAll(dir, 0755); err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to create directory %s: %v", dir, err)
+        }</span>
+        
+        <span class="cov0" title="0">if err := os.WriteFile(path, []byte(content), 0755); err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to create executable %s: %v", path, err)
+        }</span>
+}
+
+// FileExists checks if a file exists
+func FileExists(t *testing.T, path string) bool <span class="cov8" title="1">{
+        t.Helper()
+        
+        _, err := os.Stat(path)
+        return err == nil
+}</span>
+
+// ReadFile reads and returns file content
+func ReadFile(t *testing.T, path string) string <span class="cov8" title="1">{
+        t.Helper()
+        
+        content, err := os.ReadFile(path)
+        if err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to read file %s: %v", path, err)
+        }</span>
+        
+        <span class="cov8" title="1">return string(content)</span>
+}
+
+// AssertFileContent checks if a file has the expected content
+func AssertFileContent(t *testing.T, path, expected string) <span class="cov0" title="0">{
+        t.Helper()
+        
+        actual := ReadFile(t, path)
+        if actual != expected </span><span class="cov0" title="0">{
+                t.Errorf("File %s content mismatch:\nExpected:\n%s\nActual:\n%s", path, expected, actual)
+        }</span>
+}
+
+// CreateProjectStructure creates a basic devslot project structure
+func CreateProjectStructure(t *testing.T, root string) <span class="cov0" title="0">{
+        t.Helper()
+        
+        // Create directories
+        dirs := []string{
+                filepath.Join(root, "hooks"),
+                filepath.Join(root, "repos"),
+                filepath.Join(root, "slots"),
+        }
+        
+        for _, dir := range dirs </span><span class="cov0" title="0">{
+                if err := os.MkdirAll(dir, 0755); err != nil </span><span class="cov0" title="0">{
+                        t.Fatalf("Failed to create directory %s: %v", dir, err)
+                }</span>
+        }
+        
+        // Create devslot.yaml
+        <span class="cov0" title="0">configContent := `repositories:
+  - name: example-repo
+    url: https://github.com/example/repo.git
+`
+        CreateFile(t, filepath.Join(root, "devslot.yaml"), configContent)
+        
+        // Create .gitignore
+        gitignoreContent := `repos/
+slots/
+`
+        CreateFile(t, filepath.Join(root, ".gitignore"), gitignoreContent)</span>
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
