@@ -14,8 +14,3 @@
     # Create GitHub releases
     release = true
     
-    # Major version string in version file
-    majorVersionString = var version = "{{.Major}}.0.0"
-    
-    # Minor version string in version file
-    minorVersionString = var version = "{{.Major}}.{{.Minor}}.0"
