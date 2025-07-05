@@ -75,7 +75,7 @@ func (cmd *DoctorCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
-const version = "0.1.0"
+var version = "dev"
 
 type VersionCmd struct{}
 
