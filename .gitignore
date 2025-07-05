@@ -18,8 +18,8 @@ vendor/
 go.work
 go.work.sum
 
-# Binary with project name
-devslot
+# Binary with project name (only at root)
+/devslot
 
 # IDE specific files
 .idea/
