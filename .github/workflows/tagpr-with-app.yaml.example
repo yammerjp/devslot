@@ -1,0 +1,33 @@
+name: tagpr (with GitHub App)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tagpr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      # Generate GitHub App token that can trigger other workflows
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Run tagpr
+        uses: Songmu/tagpr@v1
+        env:
+          # Use GitHub App token to allow triggering release workflow
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
