@@ -8,6 +8,10 @@ import (
 	"github.com/alecthomas/kong"
 )
 
+type Context struct {
+	Writer io.Writer
+}
+
 type CLI struct {
 	Boilerplate BoilerplateCmd `cmd:"" help:"Generate initial project structure in the specified directory"`
 	Init        InitCmd        `cmd:"" help:"Sync bare repositories defined in devslot.yaml into repos/"`
@@ -18,22 +22,20 @@ type CLI struct {
 	Doctor      DoctorCmd      `cmd:"" help:"Check consistency of project structure and repositories"`
 	Version     VersionCmd     `cmd:"" help:"Show devslot version"`
 
-	VersionFlag bool `short:"v" help:"Show version (alias for 'version')"`
+	VersionFlag kong.VersionFlag `short:"v" name:"version" help:"Show version (alias for 'version')"`
 }
 
 type BoilerplateCmd struct {
 	Dir string `arg:"" help:"Target directory"`
 }
 
-func (cmd *BoilerplateCmd) Run() error {
-	return fmt.Errorf("not implemented")
-}
+// Run is defined in boilerplate.go
 
 type InitCmd struct {
 	AllowDelete bool `help:"Delete repositories no longer listed in devslot.yaml"`
 }
 
-func (cmd *InitCmd) Run() error {
+func (cmd *InitCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -41,7 +43,7 @@ type CreateCmd struct {
 	Slot string `arg:"" help:"Slot name"`
 }
 
-func (cmd *CreateCmd) Run() error {
+func (cmd *CreateCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -49,7 +51,7 @@ type DestroyCmd struct {
 	Slot string `arg:"" help:"Slot name"`
 }
 
-func (cmd *DestroyCmd) Run() error {
+func (cmd *DestroyCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -57,30 +59,34 @@ type ReloadCmd struct {
 	Slot string `arg:"" help:"Slot name"`
 }
 
-func (cmd *ReloadCmd) Run() error {
+func (cmd *ReloadCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
 type ListCmd struct{}
 
-func (cmd *ListCmd) Run() error {
+func (cmd *ListCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
 type DoctorCmd struct{}
 
-func (cmd *DoctorCmd) Run() error {
+func (cmd *DoctorCmd) Run(ctx *Context) error {
 	return fmt.Errorf("not implemented")
 }
 
+const version = "0.1.0"
+
 type VersionCmd struct{}
 
-func (cmd *VersionCmd) Run() error {
-	return fmt.Errorf("not implemented")
+func (cmd *VersionCmd) Run(ctx *Context) error {
+	fmt.Fprintf(ctx.Writer, "devslot version %s\n", version)
+	return nil
 }
 
 type App struct {
 	parser *kong.Kong
+	writer io.Writer
 }
 
 func NewApp(w io.Writer) *App {
@@ -94,18 +100,39 @@ func NewApp(w io.Writer) *App {
 		}),
 		kong.Writers(w, w),
 		kong.Exit(func(int) {}),
+		kong.Bind(&Context{Writer: w}),
+		kong.Vars{
+			"version": fmt.Sprintf("devslot version %s", version),
+		},
 	)
-	return &App{parser: parser}
+	return &App{parser: parser, writer: w}
 }
 
 func (app *App) Run(args []string) error {
-	_, err := app.parser.Parse(args)
-	return err
+	// Display help if no args are provided
+	if len(args) == 0 {
+		args = append(args, "--help")
+	}
+	
+	ctx, err := app.parser.Parse(args)
+	if err != nil {
+		return err
+	}
+	
+	return ctx.Run(&Context{Writer: app.writer})
 }
 
 func main() {
 	app := NewApp(os.Stdout)
-	if err := app.Run(os.Args[1:]); err != nil {
+	args := os.Args[1:]
+	
+	// Special case: no arguments should show help with exit 0
+	if len(args) == 0 {
+		_ = app.Run([]string{"--help"})
+		return
+	}
+	
+	if err := app.Run(args); err != nil {
 		os.Exit(1)
 	}
 }
