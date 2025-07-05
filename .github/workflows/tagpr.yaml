@@ -18,9 +18,16 @@ jobs:
         with:
           persist-credentials: true
 
+      # Generate GitHub App token that can trigger other workflows
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Run tagpr
         uses: Songmu/tagpr@v1
         env:
-          # Use PAT if available, otherwise fallback to GITHUB_TOKEN
-          # PAT is required to trigger the release workflow
-          GITHUB_TOKEN: ${{ secrets.TAGPR_PAT || secrets.GITHUB_TOKEN }}
+          # Use GitHub App token to allow triggering release workflow
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
