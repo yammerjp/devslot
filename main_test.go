@@ -40,6 +40,16 @@ func TestHelp(t *testing.T) {
 				"Development environment manager for multi-repo worktrees",
 			},
 		},
+		{
+			name: "no arguments shows help",
+			args: []string{},
+			want: []string{
+				"Usage: devslot <command>",
+				"Development environment manager for multi-repo worktrees",
+				"Commands:",
+				"Flags:",
+			},
+		},
 	}
 
 	for _, tt := range tests {

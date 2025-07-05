@@ -109,6 +109,11 @@ func NewApp(w io.Writer) *App {
 }
 
 func (app *App) Run(args []string) error {
+	// Display help if no args are provided
+	if len(args) == 0 {
+		args = append(args, "--help")
+	}
+	
 	ctx, err := app.parser.Parse(args)
 	if err != nil {
 		return err
@@ -119,7 +124,15 @@ func (app *App) Run(args []string) error {
 
 func main() {
 	app := NewApp(os.Stdout)
-	if err := app.Run(os.Args[1:]); err != nil {
+	args := os.Args[1:]
+	
+	// Special case: no arguments should show help with exit 0
+	if len(args) == 0 {
+		_ = app.Run([]string{"--help"})
+		return
+	}
+	
+	if err := app.Run(args); err != nil {
 		os.Exit(1)
 	}
 }
