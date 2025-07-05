@@ -2,8 +2,8 @@
     # Release branch
     releaseBranch = main
     
-    # Version file - main.go contains the version variable
-    versionFile = main.go
+    # Version file - use git tags only (no version file)
+    versionFile = -
     
     # Add v prefix to tags (e.g. v0.2.0)
     vPrefix = true
@@ -14,8 +14,3 @@
     # Create GitHub releases
     release = true
     
-    # Major version string in version file
-    majorVersionString = var version = "{{.Major}}.0.0"
-    
-    # Minor version string in version file
-    minorVersionString = var version = "{{.Major}}.{{.Minor}}.0"
