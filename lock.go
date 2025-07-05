@@ -35,7 +35,7 @@ func (l *FileLock) Lock() error {
 	}
 
 	l.file = file
-	
+
 	// Write PID and timestamp to lock file
 	content := fmt.Sprintf("PID: %d\nTime: %s\n", os.Getpid(), time.Now().Format(time.RFC3339))
 	if err := file.Truncate(0); err != nil {
@@ -67,3 +67,4 @@ func (l *FileLock) Unlock() error {
 	l.file = nil
 	return nil
 }
+

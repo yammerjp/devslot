@@ -195,12 +195,12 @@ repositories: []
 		var buf strings.Builder
 		app := NewApp(&buf)
 		err = app.Run([]string{"init"})
-		
+
 		// The command should fail due to lock
 		if err == nil {
 			t.Errorf("Init should have failed due to lock")
 		}
-		
+
 		// Check that the error is about the lock
 		if !strings.Contains(err.Error(), "another devslot process is already running") {
 			t.Errorf("Expected lock error, got: %v", err)
@@ -210,11 +210,11 @@ repositories: []
 
 // e2eTestEnv holds the test environment
 type e2eTestEnv struct {
-	t              *testing.T
-	rootDir        string
-	projectRoot    string
-	testReposRoot  string
-	devslotBinary  string
+	t             *testing.T
+	rootDir       string
+	projectRoot   string
+	testReposRoot string
+	devslotBinary string
 }
 
 func setupE2ETest(t *testing.T) *e2eTestEnv {
@@ -306,7 +306,7 @@ func (env *e2eTestEnv) runDevslot(args ...string) (string, error) {
 
 	cmd := exec.Command(env.devslotBinary, args...)
 	cmd.Dir = env.projectRoot
-	
+
 	output, err := cmd.CombinedOutput()
 	return string(output), err
 }

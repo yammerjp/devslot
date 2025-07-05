@@ -61,7 +61,7 @@ repositories: []
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			configPath := filepath.Join(tmpDir, "devslot.yaml")
-			
+
 			err := os.WriteFile(configPath, []byte(tt.yamlContent), 0644)
 			if err != nil {
 				t.Fatalf("failed to write test config: %v", err)
@@ -204,3 +204,4 @@ func TestFindProjectRoot(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && s[:len(substr)] == substr || len(s) > len(substr) && contains(s[1:], substr)
 }
+

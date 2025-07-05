@@ -53,7 +53,7 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 
 		// Clone as bare repository
 		fmt.Fprintf(ctx.Writer, "Cloning %s into %s\n", repoURL, repoName)
-		
+
 		// For local paths, convert to absolute path
 		cloneURL := repoURL
 		if isLocal && !strings.HasPrefix(repoURL, "file://") {
@@ -62,7 +62,7 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 				cloneURL = absPath
 			}
 		}
-		
+
 		gitCmd := exec.Command("git", "clone", "--bare", cloneURL, repoPath)
 		gitCmd.Stdout = ctx.Writer
 		gitCmd.Stderr = ctx.Writer
@@ -106,4 +106,3 @@ func (cmd *InitCmd) Run(ctx *Context) error {
 	fmt.Fprintln(ctx.Writer, "Init completed successfully")
 	return nil
 }
-
