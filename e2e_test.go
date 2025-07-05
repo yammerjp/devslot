@@ -177,7 +177,7 @@ repositories: []
 		if err != nil {
 			t.Fatalf("failed to get current directory: %v", err)
 		}
-		defer os.Chdir(oldWd)
+		defer func() { _ = os.Chdir(oldWd) }()
 
 		err = os.Chdir(testEnv.projectRoot)
 		if err != nil {
