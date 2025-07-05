@@ -27,7 +27,25 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Run tagpr
+        id: tagpr
         uses: Songmu/tagpr@v1
         env:
           # Use GitHub App token to allow triggering release workflow
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      # Run GoReleaser when tagpr creates a tag
+      - name: Set up Go
+        if: steps.tagpr.outputs.tag != ''
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run GoReleaser
+        if: steps.tagpr.outputs.tag != ''
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
