@@ -258,30 +258,31 @@ async function testNoConfig() {
 async function testConcurrentLock() {
   await setupTest('concurrent_lock')
   
-  // Create a repository to make init take longer
-  const repo = await createTestRepo('lock-test-repo')
+  // Create multiple repositories to make init take longer
+  const repos = []
+  for (let i = 0; i < 10; i++) {
+    repos.push(await createTestRepo(`lock-test-repo-${i}`))
+  }
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo}
+${repos.map(r => `  - ${r}`).join('\n')}
 `)
   
-  // Start two init commands in parallel
-  const init1 = $({ nothrow: true })`${devslotBinary} init`
+  // Start many init commands in parallel to increase chance of lock conflict
+  const initCommands = []
+  for (let i = 0; i < 5; i++) {
+    initCommands.push($({ nothrow: true })`${devslotBinary} init`)
+  }
   
-  // Small delay to let first command acquire lock
-  await sleep(20)
+  // Wait for all to complete
+  const results = await Promise.all(initCommands)
   
-  const init2 = $({ nothrow: true })`${devslotBinary} init`
-  
-  // Wait for both to complete
-  const [result1, result2] = await Promise.all([init1, init2])
-  
-  // One should succeed, one should fail with lock error
+  // One should succeed, others should fail with lock error
   let successCount = 0
   let lockFailureCount = 0
   
-  for (const result of [result1, result2]) {
+  for (const result of results) {
     if (result.ok) {
       successCount++
     } else {
@@ -292,8 +293,8 @@ repositories:
     }
   }
   
-  if (successCount !== 1 || lockFailureCount !== 1) {
-    fail(`Expected 1 success and 1 lock failure, got ${successCount} successes and ${lockFailureCount} lock failures`)
+  if (successCount !== 1 || lockFailureCount !== 4) {
+    fail(`Expected 1 success and 4 lock failures, got ${successCount} successes and ${lockFailureCount} lock failures`)
     return
   }
   
