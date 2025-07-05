@@ -79,7 +79,7 @@ func TestBoilerplateCommand(t *testing.T) {
 					t.Errorf("expected file %s to exist: %v", file, err)
 					continue
 				}
-				
+
 				// Check if hook files are executable
 				if strings.HasPrefix(file, "hooks/") && !isExecutable(info) {
 					t.Errorf("expected %s to be executable", file)

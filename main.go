@@ -113,25 +113,25 @@ func (app *App) Run(args []string) error {
 	if len(args) == 0 {
 		args = append(args, "--help")
 	}
-	
+
 	ctx, err := app.parser.Parse(args)
 	if err != nil {
 		return err
 	}
-	
+
 	return ctx.Run(&Context{Writer: app.writer})
 }
 
 func main() {
 	app := NewApp(os.Stdout)
 	args := os.Args[1:]
-	
+
 	// Special case: no arguments should show help with exit 0
 	if len(args) == 0 {
 		_ = app.Run([]string{"--help"})
 		return
 	}
-	
+
 	if err := app.Run(args); err != nil {
 		os.Exit(1)
 	}
