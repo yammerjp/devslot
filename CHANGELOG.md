@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.2.2](https://github.com/yammerjp/devslot/compare/v0.2.1...v0.2.2) - 2025-07-05
+- Implement init command for syncing bare repositories by @yammerjp in https://github.com/yammerjp/devslot/pull/7
+- Integrate GoReleaser into tagpr workflow by @yammerjp in https://github.com/yammerjp/devslot/pull/18
+
 ## [v0.2.1](https://github.com/yammerjp/devslot/compare/v0.2.0...v0.2.1) - 2025-07-05
 - Fix version embedding for GoReleaser builds by @yammerjp in https://github.com/yammerjp/devslot/pull/8
 - Add tagpr for PR-based release management by @yammerjp in https://github.com/yammerjp/devslot/pull/9
