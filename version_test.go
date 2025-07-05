@@ -15,17 +15,17 @@ func TestVersionCommand(t *testing.T) {
 		{
 			name: "version command",
 			args: []string{"version"},
-			want: "devslot version 0.1.0\n",
+			want: "devslot version dev\n",
 		},
 		{
 			name: "version flag",
 			args: []string{"-v"},
-			want: "devslot version 0.1.0",
+			want: "devslot version dev",
 		},
 		{
 			name: "version long flag",
 			args: []string{"--version"},
-			want: "devslot version 0.1.0",
+			want: "devslot version dev",
 		},
 	}
 
