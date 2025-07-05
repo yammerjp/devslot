@@ -18,14 +18,15 @@ install: ## Install the binary to $GOPATH/bin
 
 ##@ Test
 
-test: test-unit test-integration ## Run all tests (unit + integration)
+test: test-unit test-e2e ## Run all tests (unit + E2E)
 
 test-unit: ## Run unit tests
 	@echo "Running unit tests..."
 	@go test -v ./...
 
-test-integration: build ## Run integration tests (E2E)
-	@echo "Running integration tests..."
+test-e2e: build ## Run E2E tests using zx
+	@echo "Running E2E tests..."
+	@echo "Note: Requires Node.js and zx. Install with mise or 'npm install -g zx'"
 	@mise exec -- zx test/e2e/init.test.mjs
 
 test-coverage: ## Run tests with coverage report
