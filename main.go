@@ -8,6 +8,10 @@ import (
 	"github.com/alecthomas/kong"
 )
 
+type Context struct {
+	Writer io.Writer
+}
+
 type CLI struct {
 	Boilerplate BoilerplateCmd `cmd:"" help:"Generate initial project structure in the specified directory"`
 	Init        InitCmd        `cmd:"" help:"Sync bare repositories defined in devslot.yaml into repos/"`
@@ -18,7 +22,7 @@ type CLI struct {
 	Doctor      DoctorCmd      `cmd:"" help:"Check consistency of project structure and repositories"`
 	Version     VersionCmd     `cmd:"" help:"Show devslot version"`
 
-	VersionFlag bool `short:"v" help:"Show version (alias for 'version')"`
+	VersionFlag kong.VersionFlag `short:"v" name:"version" help:"Show version (alias for 'version')"`
 }
 
 type BoilerplateCmd struct {
@@ -73,14 +77,18 @@ func (cmd *DoctorCmd) Run() error {
 	return fmt.Errorf("not implemented")
 }
 
+const version = "0.1.0"
+
 type VersionCmd struct{}
 
-func (cmd *VersionCmd) Run() error {
-	return fmt.Errorf("not implemented")
+func (cmd *VersionCmd) Run(ctx *Context) error {
+	fmt.Fprintf(ctx.Writer, "devslot version %s\n", version)
+	return nil
 }
 
 type App struct {
 	parser *kong.Kong
+	writer io.Writer
 }
 
 func NewApp(w io.Writer) *App {
@@ -94,13 +102,21 @@ func NewApp(w io.Writer) *App {
 		}),
 		kong.Writers(w, w),
 		kong.Exit(func(int) {}),
+		kong.Bind(&Context{Writer: w}),
+		kong.Vars{
+			"version": fmt.Sprintf("devslot version %s", version),
+		},
 	)
-	return &App{parser: parser}
+	return &App{parser: parser, writer: w}
 }
 
 func (app *App) Run(args []string) error {
-	_, err := app.parser.Parse(args)
-	return err
+	ctx, err := app.parser.Parse(args)
+	if err != nil {
+		return err
+	}
+	
+	return ctx.Run(&Context{Writer: app.writer})
 }
 
 func main() {
