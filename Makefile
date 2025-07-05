@@ -1,5 +1,5 @@
 .PHONY: all build build.binary build.install
-.PHONY: test test.all test.unit test.e2e test.e2e.watch test.coverage test.race
+.PHONY: test test.all test.unit test.e2e test.coverage test.race
 .PHONY: check check.all check.format check.lint check.mod
 .PHONY: dev dev.run dev.clean dev.setup
 .PHONY: ci ci.setup ci.test ci.check
@@ -37,11 +37,6 @@ test.e2e: build.binary ## Run E2E tests using zx
 	@echo "Running E2E tests..."
 	@echo "Note: Requires zx. Install with 'npm install -g zx' or use mise"
 	@zx test/e2e/init.test.mjs
-
-test.e2e.watch: build.binary ## Run E2E tests in watch mode
-	@echo "Running E2E tests in watch mode..."
-	@echo "Note: Requires nodemon and zx. Install globally or use mise"
-	@nodemon -e go,mjs --exec "make build.binary && zx test/e2e/init.test.mjs"
 
 test.coverage: ## Run tests with coverage report
 	@echo "Running tests with coverage..."
