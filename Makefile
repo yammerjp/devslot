@@ -35,12 +35,28 @@ test.unit: ## Run unit tests
 
 test.e2e: build.binary ## Run E2E tests using zx
 	@echo "Running E2E tests..."
-	@echo "Note: Requires Node.js and zx. Install with mise or 'npm install -g zx'"
-	@mise exec -- zx test/e2e/init.test.mjs
+	@if command -v zx >/dev/null 2>&1; then \
+		zx test/e2e/init.test.mjs; \
+	elif command -v mise >/dev/null 2>&1; then \
+		echo "Using mise to run zx..."; \
+		mise exec -- zx test/e2e/init.test.mjs; \
+	else \
+		echo "Error: zx not found. Install with 'npm install -g zx' or use mise"; \
+		exit 1; \
+	fi
 
 test.e2e.watch: build.binary ## Run E2E tests in watch mode
 	@echo "Running E2E tests in watch mode..."
-	@nodemon -e go,mjs --exec "make build.binary && mise exec -- zx test/e2e/init.test.mjs"
+	@if command -v nodemon >/dev/null 2>&1; then \
+		if command -v zx >/dev/null 2>&1; then \
+			nodemon -e go,mjs --exec "make build.binary && zx test/e2e/init.test.mjs"; \
+		else \
+			nodemon -e go,mjs --exec "make build.binary && mise exec -- zx test/e2e/init.test.mjs"; \
+		fi \
+	else \
+		echo "Error: nodemon not found. Install with 'npm install -g nodemon'"; \
+		exit 1; \
+	fi
 
 test.coverage: ## Run tests with coverage report
 	@echo "Running tests with coverage..."
