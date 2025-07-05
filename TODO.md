@@ -26,7 +26,7 @@
 
 #### 1.1 設定ファイル管理
 - `devslot.yaml`の読み込み・パース機能
-- YAMLパーサーライブラリの導入（gopkg.in/yaml.v3）
+- YAMLパーサーライブラリの導入（github.com/goccy/go-yaml）
 - 設定構造体の定義
 
 #### 1.2 ロック機構
@@ -96,7 +96,7 @@
 - プログレスバーの表示
 
 ### 外部ライブラリ
-- `gopkg.in/yaml.v3` - YAML処理
+- `github.com/goccy/go-yaml` - YAML処理（高速で標準ライブラリ互換）
 - `github.com/schollz/progressbar/v3` - 進捗表示（オプション）
 - 標準ライブラリを優先的に使用
 
