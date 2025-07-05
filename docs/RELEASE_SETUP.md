@@ -1,95 +1,95 @@
-# Release Setup Guide
+# リリースセットアップガイド
 
-This project uses tagpr for automated release management. There are three ways to set it up:
+このプロジェクトではtagprを使用して自動リリース管理を行います。3つのセットアップ方法があります。
 
-## Option 1: Basic Setup (Manual Tagging)
+## オプション1: 基本セットアップ（手動タグ付け）
 
-The simplest setup uses the default `GITHUB_TOKEN`. However, this **will not** automatically trigger the release workflow when tagpr creates a tag.
+最もシンプルな設定で、デフォルトの`GITHUB_TOKEN`を使用します。ただし、tagprがタグを作成してもリリースワークフローは**自動的にトリガーされません**。
 
-**Limitation**: You'll need to manually trigger the release workflow after tagpr creates a tag.
+**制限事項**: tagprがタグを作成した後、手動でリリースワークフローを実行する必要があります。
 
-## Option 2: Personal Access Token (PAT)
+## オプション2: Personal Access Token (PAT)
 
-Using a PAT allows tagpr to trigger the release workflow automatically.
+PATを使用すると、tagprがリリースワークフローを自動的にトリガーできます。
 
-### Setup Steps:
+### セットアップ手順:
 
-1. Create a Personal Access Token:
-   - Go to GitHub Settings > Developer settings > Personal access tokens
-   - Create a new token with `repo` and `workflow` scopes
-   - Copy the token
+1. Personal Access Tokenを作成:
+   - GitHub Settings > Developer settings > Personal access tokens へ移動
+   - `repo`と`workflow`スコープを持つ新しいトークンを作成
+   - トークンをコピー
 
-2. Add the token to repository secrets:
-   - Go to repository Settings > Secrets and variables > Actions
-   - Add a new secret named `TAGPR_PAT`
-   - Paste your PAT as the value
+2. リポジトリのシークレットに追加:
+   - リポジトリの Settings > Secrets and variables > Actions へ移動
+   - `TAGPR_PAT`という名前で新しいシークレットを追加
+   - コピーしたPATを値として貼り付け
 
-3. The workflow will automatically use the PAT if available
+3. ワークフローは利用可能な場合、自動的にPATを使用します
 
-## Option 3: GitHub App (Recommended for Organizations)
+## オプション3: GitHub App（組織での使用推奨）
 
-GitHub Apps provide better security and management compared to PATs.
+GitHub AppsはPATと比較して、より優れたセキュリティと管理機能を提供します。
 
-### Setup Steps:
+### セットアップ手順:
 
-1. Create a GitHub App:
-   - Go to Settings > Developer settings > GitHub Apps
-   - Click "New GitHub App"
-   - Fill in the required fields:
-     - Name: `<your-org>-tagpr-bot` (or similar)
-     - Homepage URL: Your repository URL
-     - Webhook: Uncheck "Active"
-   - Permissions:
+1. GitHub Appを作成:
+   - Settings > Developer settings > GitHub Apps へ移動
+   - 「New GitHub App」をクリック
+   - 必要項目を入力:
+     - Name: `<your-org>-tagpr-bot` （または任意の名前）
+     - Homepage URL: リポジトリのURL
+     - Webhook: 「Active」のチェックを外す
+   - 権限設定:
      - Repository permissions:
        - Contents: Read & Write
        - Metadata: Read
        - Pull requests: Read & Write
        - Issues: Read & Write
        - Actions: Read
-     - Account permissions: None
-   - Where can this GitHub App be installed: "Only on this account"
-   - Click "Create GitHub App"
+     - Account permissions: なし
+   - Where can this GitHub App be installed: 「Only on this account」
+   - 「Create GitHub App」をクリック
 
-2. Generate and store private key:
-   - In your new App's settings, scroll to "Private keys"
-   - Click "Generate a private key"
-   - Save the downloaded .pem file
+2. 秘密鍵を生成して保存:
+   - 作成したAppの設定で「Private keys」までスクロール
+   - 「Generate a private key」をクリック
+   - ダウンロードされた.pemファイルを保存
 
-3. Install the App:
-   - In the App settings, click "Install App"
-   - Select your repository
+3. Appをインストール:
+   - App設定で「Install App」をクリック
+   - 対象のリポジトリを選択
 
-4. Configure repository:
-   - Note your App ID (shown in the App settings)
-   - Go to repository Settings > Secrets and variables > Actions
-   - Add secret `APP_PRIVATE_KEY` with the contents of the .pem file
-   - Add variable `APP_ID` with your App ID
+4. リポジトリを設定:
+   - App ID（App設定に表示）をメモ
+   - リポジトリの Settings > Secrets and variables > Actions へ移動
+   - シークレット`APP_PRIVATE_KEY`に.pemファイルの内容を追加
+   - 変数`APP_ID`にApp IDを追加
 
-5. Use the example workflow:
+5. サンプルワークフローを使用:
    ```bash
    cp .github/workflows/tagpr-with-app.yaml.example .github/workflows/tagpr.yaml
    ```
 
-## Comparison
+## 比較表
 
-| Feature | Basic | PAT | GitHub App |
-|---------|-------|-----|------------|
-| Auto-trigger release | ❌ | ✅ | ✅ |
-| Security | ✅ | ⚠️ | ✅ |
-| User-independent | ✅ | ❌ | ✅ |
-| Expiration | N/A | Optional | 1 hour (auto-renewed) |
-| Audit trail | Basic | User-based | App-based |
-| Setup complexity | Low | Medium | High |
+| 機能 | 基本 | PAT | GitHub App |
+|------|------|-----|------------|
+| リリース自動トリガー | ❌ | ✅ | ✅ |
+| セキュリティ | ✅ | ⚠️ | ✅ |
+| ユーザー非依存 | ✅ | ❌ | ✅ |
+| 有効期限 | なし | 任意 | 1時間（自動更新） |
+| 監査証跡 | 基本 | ユーザーベース | Appベース |
+| セットアップの複雑さ | 低 | 中 | 高 |
 
-## Troubleshooting
+## トラブルシューティング
 
-### Release workflow not triggering
+### リリースワークフローがトリガーされない
 
-1. Check that the PAT or GitHub App has the correct permissions
-2. Verify the secret/variable names match the workflow
-3. Check the Actions log for any permission errors
+1. PATまたはGitHub Appが正しい権限を持っているか確認
+2. シークレット/変数名がワークフローと一致しているか確認
+3. Actionsログで権限エラーがないか確認
 
-### Permission errors
+### 権限エラー
 
-Ensure "Allow GitHub Actions to create and approve pull requests" is enabled in:
-Settings > Actions > General > Workflow permissions
+以下の設定が有効になっているか確認:
+Settings > Actions > General > Workflow permissions > 「Allow GitHub Actions to create and approve pull requests」
