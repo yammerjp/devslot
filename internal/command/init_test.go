@@ -105,6 +105,42 @@ repositories:
 			},
 		},
 		{
+			name: "post-init hook is executed",
+			setupFunc: func(t *testing.T, projectRoot string) {
+				yamlContent := `version: 1
+repositories: []
+`
+				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
+
+				// Create post-init hook
+				hooksDir := filepath.Join(projectRoot, "hooks")
+				if err := os.MkdirAll(hooksDir, 0755); err != nil {
+					t.Fatalf("failed to create hooks directory: %v", err)
+				}
+
+				hookScript := `#!/bin/bash
+echo "POST-INIT-HOOK-EXECUTED" > "$DEVSLOT_ROOT/post-init-marker"
+`
+				hookPath := filepath.Join(hooksDir, "post-init")
+				if err := os.WriteFile(hookPath, []byte(hookScript), 0755); err != nil {
+					t.Fatalf("failed to create post-init hook: %v", err)
+				}
+			},
+			wantErr: false,
+			validateFunc: func(t *testing.T, projectRoot string) {
+				// Check that post-init hook was executed
+				markerPath := filepath.Join(projectRoot, "post-init-marker")
+				data, err := os.ReadFile(markerPath)
+				if err != nil {
+					t.Error("post-init hook was not executed (marker file not found)")
+					return
+				}
+				if strings.TrimSpace(string(data)) != "POST-INIT-HOOK-EXECUTED" {
+					t.Errorf("post-init hook marker has wrong content: %q", string(data))
+				}
+			},
+		},
+		{
 			name:        "existing repository gets skipped",
 			allowDelete: false,
 			setupFunc: func(t *testing.T, projectRoot string) {
