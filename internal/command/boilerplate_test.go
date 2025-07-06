@@ -21,7 +21,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 	if err := os.Chdir(tempDir); err != nil {
 		t.Fatalf("Failed to change directory: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() { _ = os.Chdir(originalDir) }()
 
 	// Run boilerplate command
 	var buf bytes.Buffer
@@ -104,7 +104,7 @@ func TestBoilerplateCmd_RunTwice(t *testing.T) {
 	if err := os.Chdir(tempDir); err != nil {
 		t.Fatalf("Failed to change directory: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() { _ = os.Chdir(originalDir) }()
 
 	// Run boilerplate command twice
 	cmd := &BoilerplateCmd{}
@@ -138,7 +138,7 @@ func TestBoilerplateCmd_ExistingGitignore(t *testing.T) {
 	if err := os.Chdir(tempDir); err != nil {
 		t.Fatalf("Failed to change directory: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() { _ = os.Chdir(originalDir) }()
 
 	// Create existing .gitignore
 	existingContent := "node_modules/\n*.log\n"
