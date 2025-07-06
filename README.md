@@ -22,6 +22,32 @@ devslot helps you manage multiple Git repositories as a cohesive development env
 
 ## Installation
 
+### Download Binary
+
+Download the latest binary from the [releases page](https://github.com/yammerjp/devslot/releases).
+
+#### macOS
+```bash
+# Intel Mac
+curl -L https://github.com/yammerjp/devslot/releases/latest/download/devslot_Darwin_x86_64.tar.gz | tar xz
+sudo mv devslot /usr/local/bin/
+
+# Apple Silicon Mac
+curl -L https://github.com/yammerjp/devslot/releases/latest/download/devslot_Darwin_arm64.tar.gz | tar xz
+sudo mv devslot /usr/local/bin/
+```
+
+#### Linux
+```bash
+# x86_64
+curl -L https://github.com/yammerjp/devslot/releases/latest/download/devslot_Linux_x86_64.tar.gz | tar xz
+sudo mv devslot /usr/local/bin/
+
+# ARM64
+curl -L https://github.com/yammerjp/devslot/releases/latest/download/devslot_Linux_arm64.tar.gz | tar xz
+sudo mv devslot /usr/local/bin/
+```
+
 ### Using Go
 
 ```bash
