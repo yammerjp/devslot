@@ -33,19 +33,22 @@ func (c *DestroyCmd) Run(ctx *Context) error {
 	}
 	defer func() {
 		if err := lockFile.Release(); err != nil {
-			fmt.Fprintf(ctx.Writer, "Warning: failed to release lock: %v\n", err)
+			ctx.Printf("Warning: failed to release lock: %v\n", err)
+			ctx.LogWarn("failed to release lock", "error", err)
 		}
 	}()
 
 	// Destroy slot
 	mgr := slot.NewManager(projectRoot)
-	fmt.Fprintf(ctx.Writer, "Destroying slot '%s'...\n", c.SlotName)
+	ctx.Printf("Destroying slot '%s'...\n", c.SlotName)
+	ctx.LogInfo("destroying slot", "slot", c.SlotName)
 
 	if err := mgr.Destroy(c.SlotName); err != nil {
 		return fmt.Errorf("failed to destroy slot: %w", err)
 	}
 
-	fmt.Fprintf(ctx.Writer, "Slot '%s' destroyed successfully!\n", c.SlotName)
+	ctx.Printf("Slot '%s' destroyed successfully!\n", c.SlotName)
+	ctx.LogInfo("slot destroyed", "slot", c.SlotName)
 
 	return nil
 }

@@ -2,13 +2,16 @@ package main
 
 import (
 	"io"
+	"log/slog"
 	"os"
 
 	"github.com/alecthomas/kong"
 	"github.com/yammerjp/devslot/internal/command"
+	"github.com/yammerjp/devslot/internal/logger"
 )
 
 type CLI struct {
+	Verbose     bool                   `short:"v" help:"Enable verbose logging"`
 	Boilerplate command.BoilerplateCmd `cmd:"" help:"Create boilerplate structure for a new project"`
 	Init        command.InitCmd        `cmd:"" help:"Initialize the project by syncing bare repositories"`
 	Create      command.CreateCmd      `cmd:"" help:"Create a new slot"`
@@ -22,6 +25,7 @@ type CLI struct {
 type App struct {
 	parser *kong.Kong
 	writer io.Writer
+	cli    *CLI
 }
 
 func NewApp(writer io.Writer) *App {
@@ -43,6 +47,7 @@ func NewApp(writer io.Writer) *App {
 	return &App{
 		parser: parser,
 		writer: writer,
+		cli:    cli,
 	}
 }
 
@@ -52,8 +57,19 @@ func (app *App) Run(args []string) error {
 		return err
 	}
 
+	// Access the CLI struct to get verbose flag
+
+	// Create logger with appropriate log level
+	logOpts := logger.DefaultOptions()
+	logOpts.Writer = os.Stderr // Log to stderr to keep stdout clean
+	if app.cli.Verbose {
+		logOpts.Level = slog.LevelDebug
+	}
+	log := logger.New(logOpts)
+
 	cmdCtx := &command.Context{
 		Writer: app.writer,
+		Logger: log,
 	}
 
 	return ctx.Run(cmdCtx)

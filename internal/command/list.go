@@ -30,14 +30,16 @@ func (c *ListCmd) Run(ctx *Context) error {
 	}
 
 	if len(slots) == 0 {
-		fmt.Fprintln(ctx.Writer, "No slots found.")
-		fmt.Fprintln(ctx.Writer, "Create a new slot with 'devslot create <slot-name>'")
+		ctx.Println("No slots found.")
+		ctx.Println("Create a new slot with 'devslot create <slot-name>'")
+		ctx.LogInfo("no slots found")
 		return nil
 	}
 
-	fmt.Fprintln(ctx.Writer, "Available slots:")
+	ctx.Println("Available slots:")
+	ctx.LogInfo("listing slots", "count", len(slots))
 	for _, slotName := range slots {
-		fmt.Fprintf(ctx.Writer, "  - %s\n", slotName)
+		ctx.Printf("  - %s\n", slotName)
 	}
 
 	return nil

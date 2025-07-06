@@ -33,7 +33,7 @@ func (c *CreateCmd) Run(ctx *Context) error {
 	}
 	defer func() {
 		if err := lockFile.Release(); err != nil {
-			fmt.Fprintf(ctx.Writer, "Warning: failed to release lock: %v\n", err)
+			ctx.LogWarn("failed to release lock", "error", err)
 		}
 	}()
 
@@ -45,14 +45,16 @@ func (c *CreateCmd) Run(ctx *Context) error {
 
 	// Create slot
 	mgr := slot.NewManager(projectRoot)
-	fmt.Fprintf(ctx.Writer, "Creating slot '%s'...\n", c.SlotName)
+	ctx.Printf("Creating slot '%s'...\n", c.SlotName)
+	ctx.LogInfo("creating slot", "name", c.SlotName)
 
 	if err := mgr.Create(c.SlotName, cfg); err != nil {
 		return fmt.Errorf("failed to create slot: %w", err)
 	}
 
-	fmt.Fprintf(ctx.Writer, "Slot '%s' created successfully!\n", c.SlotName)
-	fmt.Fprintf(ctx.Writer, "You can now work in: %s/slots/%s\n", projectRoot, c.SlotName)
+	ctx.Printf("Slot '%s' created successfully!\n", c.SlotName)
+	ctx.Printf("You can now work in: %s/slots/%s\n", projectRoot, c.SlotName)
+	ctx.LogInfo("slot created successfully", "name", c.SlotName, "path", filepath.Join(projectRoot, "slots", c.SlotName))
 
 	return nil
 }

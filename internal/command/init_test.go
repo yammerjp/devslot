@@ -152,7 +152,7 @@ repositories:
 			cmd := &InitCmd{
 				AllowDelete: tt.allowDelete,
 			}
-			ctx := &Context{Writer: &buf}
+			ctx := &Context{Writer: &buf, Logger: nil}
 
 			err := cmd.Run(ctx)
 			if (err != nil) != tt.wantErr {
@@ -210,7 +210,7 @@ repositories: []
 	// Try to run init command while lock is held
 	var buf bytes.Buffer
 	cmd := &InitCmd{}
-	ctx := &Context{Writer: &buf}
+	ctx := &Context{Writer: &buf, Logger: nil}
 
 	err = cmd.Run(ctx)
 	if err == nil {

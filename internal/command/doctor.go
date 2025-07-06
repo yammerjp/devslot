@@ -24,75 +24,84 @@ func (c *DoctorCmd) Run(ctx *Context) error {
 		return fmt.Errorf("not in a devslot project: %w", err)
 	}
 
-	fmt.Fprintln(ctx.Writer, "Running devslot doctor...")
-	fmt.Fprintf(ctx.Writer, "Project root: %s\n\n", projectRoot)
+	ctx.Println("Running devslot doctor...")
+	ctx.Printf("Project root: %s\n\n", projectRoot)
+	ctx.LogInfo("running doctor check", "projectRoot", projectRoot)
 
 	hasIssues := false
 
 	// Check configuration
-	fmt.Fprintln(ctx.Writer, "Checking configuration...")
+	ctx.Println("Checking configuration...")
 	cfg, err := config.Load(projectRoot)
 	if err != nil {
-		fmt.Fprintf(ctx.Writer, "  ❌ Failed to load devslot.yaml: %v\n", err)
+		ctx.Printf("  ❌ Failed to load devslot.yaml: %v\n", err)
+		ctx.LogError("failed to load configuration", "error", err)
 		hasIssues = true
 	} else {
-		fmt.Fprintln(ctx.Writer, "  ✅ devslot.yaml is valid")
-		fmt.Fprintf(ctx.Writer, "  📦 Found %d repositories\n", len(cfg.Repositories))
+		ctx.Println("  ✅ devslot.yaml is valid")
+		ctx.Printf("  📦 Found %d repositories\n", len(cfg.Repositories))
+		ctx.LogInfo("configuration loaded", "repositoryCount", len(cfg.Repositories))
 	}
 
 	// Check directories
-	fmt.Fprintln(ctx.Writer, "\nChecking directories...")
+	ctx.Println("\nChecking directories...")
 	dirs := []string{"hooks", "repos", "slots"}
 	for _, dir := range dirs {
 		dirPath := filepath.Join(projectRoot, dir)
 		if info, err := os.Stat(dirPath); err != nil {
-			fmt.Fprintf(ctx.Writer, "  ❌ Directory %s does not exist\n", dir)
+			ctx.Printf("  ❌ Directory %s does not exist\n", dir)
+			ctx.LogWarn("directory not found", "directory", dir)
 			hasIssues = true
 		} else if !info.IsDir() {
-			fmt.Fprintf(ctx.Writer, "  ❌ %s is not a directory\n", dir)
+			ctx.Printf("  ❌ %s is not a directory\n", dir)
+			ctx.LogWarn("path is not a directory", "path", dir)
 			hasIssues = true
 		} else {
-			fmt.Fprintf(ctx.Writer, "  ✅ Directory %s exists\n", dir)
+			ctx.Printf("  ✅ Directory %s exists\n", dir)
 		}
 	}
 
 	// Check repositories
 	if cfg != nil {
-		fmt.Fprintln(ctx.Writer, "\nChecking repositories...")
+		ctx.Println("\nChecking repositories...")
 		for _, repo := range cfg.Repositories {
 			bareRepoPath := filepath.Join(projectRoot, "repos", repo.Name)
 			if git.IsValidRepository(bareRepoPath) {
-				fmt.Fprintf(ctx.Writer, "  ✅ Repository %s is cloned\n", repo.Name)
+				ctx.Printf("  ✅ Repository %s is cloned\n", repo.Name)
 			} else {
-				fmt.Fprintf(ctx.Writer, "  ❌ Repository %s is not cloned (run 'devslot init')\n", repo.Name)
+				ctx.Printf("  ❌ Repository %s is not cloned (run 'devslot init')\n", repo.Name)
+				ctx.LogWarn("repository not cloned", "repository", repo.Name)
 				hasIssues = true
 			}
 		}
 	}
 
 	// Check hooks
-	fmt.Fprintln(ctx.Writer, "\nChecking hooks...")
+	ctx.Println("\nChecking hooks...")
 	hooks := []string{"post-create", "pre-destroy", "post-reload"}
 	for _, hookName := range hooks {
 		hookPath := filepath.Join(projectRoot, "hooks", hookName)
 		if info, err := os.Stat(hookPath); err == nil {
 			if info.Mode().Perm()&0111 != 0 {
-				fmt.Fprintf(ctx.Writer, "  ✅ Hook %s exists and is executable\n", hookName)
+				ctx.Printf("  ✅ Hook %s exists and is executable\n", hookName)
 			} else {
-				fmt.Fprintf(ctx.Writer, "  ⚠️  Hook %s exists but is not executable\n", hookName)
+				ctx.Printf("  ⚠️  Hook %s exists but is not executable\n", hookName)
+				ctx.LogWarn("hook not executable", "hook", hookName)
 			}
 		} else {
-			fmt.Fprintf(ctx.Writer, "  ℹ️  Hook %s not found (optional)\n", hookName)
+			ctx.Printf("  ℹ️  Hook %s not found (optional)\n", hookName)
 		}
 	}
 
 	// Summary
-	fmt.Fprintln(ctx.Writer, "\n"+strings.Repeat("-", 40))
+	ctx.Println("\n" + strings.Repeat("-", 40))
 	if hasIssues {
-		fmt.Fprintln(ctx.Writer, "❌ Some issues were found. Please fix them before continuing.")
+		ctx.Println("❌ Some issues were found. Please fix them before continuing.")
+		ctx.LogError("doctor check failed")
 		return fmt.Errorf("doctor check failed")
 	} else {
-		fmt.Fprintln(ctx.Writer, "✅ Everything looks good!")
+		ctx.Println("✅ Everything looks good!")
+		ctx.LogInfo("doctor check passed")
 	}
 
 	return nil

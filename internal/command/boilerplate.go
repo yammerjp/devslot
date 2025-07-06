@@ -26,7 +26,8 @@ func (c *BoilerplateCmd) Run(ctx *Context) error {
 		if err := os.MkdirAll(dirPath, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
-		fmt.Fprintf(ctx.Writer, "Created directory: %s\n", dir)
+		ctx.Printf("Created directory: %s\n", dir)
+		ctx.LogInfo("directory created", "directory", dir)
 	}
 
 	// Create devslot.yaml
@@ -44,7 +45,8 @@ repositories:
 	if err := createFileIfNotExists(devslotYamlPath, devslotYamlContent); err != nil {
 		return fmt.Errorf("failed to create devslot.yaml: %w", err)
 	}
-	fmt.Fprintf(ctx.Writer, "Created file: devslot.yaml\n")
+	ctx.Printf("Created file: devslot.yaml\n")
+	ctx.LogInfo("devslot.yaml created")
 
 	// Create .gitignore
 	gitignorePath := filepath.Join(currentDir, ".gitignore")
@@ -66,7 +68,8 @@ Thumbs.db
 	if err := createOrAppendToFile(gitignorePath, gitignoreContent); err != nil {
 		return fmt.Errorf("failed to update .gitignore: %w", err)
 	}
-	fmt.Fprintf(ctx.Writer, "Updated file: .gitignore\n")
+	ctx.Printf("Updated file: .gitignore\n")
+	ctx.LogInfo(".gitignore updated")
 
 	// Create hook examples
 	hookExamples := map[string]string{
@@ -117,14 +120,16 @@ echo "Slot $DEVSLOT_SLOT has been reloaded!"
 		if err := createFileIfNotExists(hookPath, content); err != nil {
 			return fmt.Errorf("failed to create hook example %s: %w", hookName, err)
 		}
-		fmt.Fprintf(ctx.Writer, "Created hook example: hooks/%s.example\n", hookName)
+		ctx.Printf("Created hook example: hooks/%s.example\n", hookName)
+		ctx.LogInfo("hook example created", "hook", hookName)
 	}
 
-	fmt.Fprintln(ctx.Writer, "\nBoilerplate project structure created successfully!")
-	fmt.Fprintln(ctx.Writer, "Next steps:")
-	fmt.Fprintln(ctx.Writer, "1. Edit devslot.yaml to add your repositories")
-	fmt.Fprintln(ctx.Writer, "2. Run 'devslot init' to clone the repositories")
-	fmt.Fprintln(ctx.Writer, "3. Create your first slot with 'devslot create <slot-name>'")
+	ctx.Println("\nBoilerplate project structure created successfully!")
+	ctx.Println("Next steps:")
+	ctx.Println("1. Edit devslot.yaml to add your repositories")
+	ctx.Println("2. Run 'devslot init' to clone the repositories")
+	ctx.Println("3. Create your first slot with 'devslot create <slot-name>'")
+	ctx.LogInfo("boilerplate created")
 
 	return nil
 }
