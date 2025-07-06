@@ -84,8 +84,10 @@ async function testBasicInit() {
   // Create devslot.yaml
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
-  - ${repo2}
+  - name: repo1.git
+    url: ${repo1}
+  - name: repo2.git
+    url: ${repo2}
 `)
   
   // Run init
@@ -129,7 +131,8 @@ async function testSkipExisting() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
+  - name: repo1.git
+    url: ${repo1}
 `)
   
   // First init
@@ -163,8 +166,10 @@ async function testAllowDelete() {
   // Initial config with both repos
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
-  - ${repo2}
+  - name: repo1.git
+    url: ${repo1}
+  - name: repo2.git
+    url: ${repo2}
 `)
   
   await $({ nothrow: true })`${devslotBinary} init`
@@ -172,7 +177,8 @@ repositories:
   // Update config to only have repo1
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
+  - name: repo1.git
+    url: ${repo1}
 `)
   
   // Run with --allow-delete
@@ -207,9 +213,12 @@ async function testUrlFormats() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo}
-  - file://${repo}
-  - ./relative-repo
+  - name: test-repo.git
+    url: ${repo}
+  - name: test-repo-file.git
+    url: file://${repo}
+  - name: relative-repo.git
+    url: ./relative-repo
 `)
   
   const result = await $({ nothrow: true })`${devslotBinary} init`
@@ -266,7 +275,7 @@ async function testConcurrentLock() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-${repos.map(r => `  - ${r}`).join('\n')}
+${repos.map((r, i) => `  - name: repo${i}.git\n    url: ${r}`).join('\n')}
 `)
   
   // Start many init commands in parallel to increase chance of lock conflict
@@ -308,7 +317,8 @@ async function testCreateReposDir() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo}
+  - name: large-repo.git
+    url: ${repo}
 `)
   
   // Ensure repos directory doesn't exist
