@@ -18,6 +18,11 @@ type Manager struct {
 	hookRunner  *hook.Runner
 }
 
+// CreateOptions contains options for creating a slot
+type CreateOptions struct {
+	Branch string // Branch to checkout (empty means default branch)
+}
+
 // NewManager creates a new slot manager
 func NewManager(projectRoot string) *Manager {
 	return &Manager{
@@ -27,7 +32,7 @@ func NewManager(projectRoot string) *Manager {
 }
 
 // Create creates a new slot
-func (m *Manager) Create(name string, cfg *config.Config) error {
+func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) error {
 	if err := m.validateSlotName(name); err != nil {
 		return err
 	}
@@ -49,14 +54,29 @@ func (m *Manager) Create(name string, cfg *config.Config) error {
 
 		// Ensure bare repository exists
 		if !git.IsValidRepository(bareRepoPath) {
-			return fmt.Errorf("bare repository %s does not exist", repo.Name)
+			// Cleanup on failure
+			os.RemoveAll(slotPath)
+			return fmt.Errorf("bare repository %s does not exist (run 'devslot init' first)", repo.Name)
+		}
+
+		// Determine which branch to use
+		branch := opts.Branch
+		if branch == "" {
+			// Get default branch
+			defaultBranch, err := git.GetDefaultBranch(bareRepoPath)
+			if err != nil {
+				// Cleanup on failure
+				os.RemoveAll(slotPath)
+				return fmt.Errorf("failed to determine default branch for %s: %w", repo.Name, err)
+			}
+			branch = defaultBranch
 		}
 
 		// Create worktree
-		if err := git.CreateWorktree(bareRepoPath, worktreePath, "main"); err != nil {
+		if err := git.CreateWorktree(bareRepoPath, worktreePath, branch); err != nil {
 			// Cleanup on failure
 			os.RemoveAll(slotPath)
-			return fmt.Errorf("failed to create worktree for %s: %w", repo.Name, err)
+			return fmt.Errorf("failed to create worktree for %s on branch %s: %w", repo.Name, branch, err)
 		}
 	}
 
@@ -150,8 +170,14 @@ func (m *Manager) Reload(name string, cfg *config.Config) error {
 
 		// Check if worktree exists
 		if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
+			// Get default branch for missing worktree
+			branch, err := git.GetDefaultBranch(bareRepoPath)
+			if err != nil {
+				return fmt.Errorf("failed to determine default branch for %s: %w", repo.Name, err)
+			}
+
 			// Create missing worktree
-			if err := git.CreateWorktree(bareRepoPath, worktreePath, "main"); err != nil {
+			if err := git.CreateWorktree(bareRepoPath, worktreePath, branch); err != nil {
 				return fmt.Errorf("failed to create worktree for %s: %w", repo.Name, err)
 			}
 		}

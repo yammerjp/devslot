@@ -41,11 +41,12 @@ test.e2e: test.e2e.zx ## Run E2E tests using zx
 test.e2e.zx: build.binary ## Run E2E tests using zx
 	@echo "Running E2E tests (zx)..."
 	@echo "Note: Requires zx. Install with 'npm install -g zx' or use mise"
-	@if [ -f test/e2e/init.test.mjs ]; then \
-		zx test/e2e/init.test.mjs; \
-	else \
-		echo "No zx E2E tests found"; \
-	fi
+	@for test in test/e2e/*.test.mjs; do \
+		if [ -f "$$test" ]; then \
+			echo "Running $$test..."; \
+			zx "$$test" || exit 1; \
+		fi; \
+	done
 
 test.coverage: ## Run tests with coverage report
 	@echo "Running tests with coverage..."
