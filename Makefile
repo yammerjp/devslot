@@ -1,5 +1,5 @@
 .PHONY: all build build.binary build.install
-.PHONY: test test.all test.unit test.e2e test.e2e.go test.e2e.zx test.coverage test.race
+.PHONY: test test.all test.unit test.e2e test.e2e.zx test.coverage test.race
 .PHONY: check check.all check.format check.lint check.mod
 .PHONY: dev dev.run dev.clean dev.setup
 .PHONY: ci ci.setup ci.test ci.check
@@ -36,13 +36,9 @@ test.unit: ## Run unit tests
 	@echo "Running unit tests..."
 	@go test -v ./...
 
-test.e2e: test.e2e.go ## Run E2E tests (Go implementation)
+test.e2e: test.e2e.zx ## Run E2E tests using zx
 
-test.e2e.go: build.binary ## Run E2E tests using Go
-	@echo "Running E2E tests (Go)..."
-	@go test -v -tags=e2e ./...
-
-test.e2e.zx: build.binary ## Run E2E tests using zx (legacy)
+test.e2e.zx: build.binary ## Run E2E tests using zx
 	@echo "Running E2E tests (zx)..."
 	@echo "Note: Requires zx. Install with 'npm install -g zx' or use mise"
 	@if [ -f test/e2e/init.test.mjs ]; then \
