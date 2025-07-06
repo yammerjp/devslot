@@ -32,9 +32,15 @@ func TestListCmd_Run(t *testing.T) {
 			name: "multiple slots",
 			setupFunc: func(t *testing.T, projectRoot string) {
 				slotsDir := filepath.Join(projectRoot, "slots")
-				os.MkdirAll(filepath.Join(slotsDir, "dev"), 0755)
-				os.MkdirAll(filepath.Join(slotsDir, "staging"), 0755)
-				os.MkdirAll(filepath.Join(slotsDir, "feature-x"), 0755)
+				if err := os.MkdirAll(filepath.Join(slotsDir, "dev"), 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.MkdirAll(filepath.Join(slotsDir, "staging"), 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.MkdirAll(filepath.Join(slotsDir, "feature-x"), 0755); err != nil {
+					t.Fatal(err)
+				}
 			},
 			wantContains: []string{
 				"Available slots:",
@@ -48,9 +54,13 @@ func TestListCmd_Run(t *testing.T) {
 			name: "slots directory with files",
 			setupFunc: func(t *testing.T, projectRoot string) {
 				slotsDir := filepath.Join(projectRoot, "slots")
-				os.MkdirAll(filepath.Join(slotsDir, "valid-slot"), 0755)
+				if err := os.MkdirAll(filepath.Join(slotsDir, "valid-slot"), 0755); err != nil {
+					t.Fatal(err)
+				}
 				// Create a file (should be ignored)
-				os.WriteFile(filepath.Join(slotsDir, "README.md"), []byte("test"), 0644)
+				if err := os.WriteFile(filepath.Join(slotsDir, "README.md"), []byte("test"), 0644); err != nil {
+					t.Fatal(err)
+				}
 			},
 			wantContains: []string{
 				"Available slots:",
