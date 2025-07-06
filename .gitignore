@@ -21,6 +21,9 @@ go.work.sum
 # Binary with project name (only at root)
 /devslot
 
+# Build output directory
+/build/
+
 # IDE specific files
 .idea/
 .vscode/
