@@ -1,9 +1,8 @@
-package main
+package lock
 
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"syscall"
 	"time"
 )
@@ -13,13 +12,13 @@ type FileLock struct {
 	file *os.File
 }
 
-func NewFileLock(projectRoot string) *FileLock {
+func New(lockPath string) *FileLock {
 	return &FileLock{
-		path: filepath.Join(projectRoot, ".devslot.lock"),
+		path: lockPath,
 	}
 }
 
-func (l *FileLock) Lock() error {
+func (l *FileLock) Acquire() error {
 	file, err := os.OpenFile(l.path, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to open lock file: %w", err)
@@ -39,18 +38,18 @@ func (l *FileLock) Lock() error {
 	// Write PID and timestamp to lock file
 	content := fmt.Sprintf("PID: %d\nTime: %s\n", os.Getpid(), time.Now().Format(time.RFC3339))
 	if err := file.Truncate(0); err != nil {
-		_ = l.Unlock()
+		_ = l.Release()
 		return fmt.Errorf("failed to truncate lock file: %w", err)
 	}
 	if _, err := file.WriteAt([]byte(content), 0); err != nil {
-		_ = l.Unlock()
+		_ = l.Release()
 		return fmt.Errorf("failed to write to lock file: %w", err)
 	}
 
 	return nil
 }
 
-func (l *FileLock) Unlock() error {
+func (l *FileLock) Release() error {
 	if l.file == nil {
 		return nil
 	}

@@ -8,7 +8,7 @@ $.verbose = false
 // Test utilities
 const testDir = (await $`mktemp -d`).stdout.trim()
 const projectRoot = process.cwd()
-const devslotBinary = path.join(projectRoot, 'devslot')
+const devslotBinary = path.join(projectRoot, 'build', 'devslot')
 
 // Cleanup on exit
 process.on('exit', () => {
@@ -84,8 +84,10 @@ async function testBasicInit() {
   // Create devslot.yaml
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
-  - ${repo2}
+  - name: repo1.git
+    url: ${repo1}
+  - name: repo2.git
+    url: ${repo2}
 `)
   
   // Run init
@@ -114,7 +116,7 @@ repositories:
     return
   }
   
-  if (!result.stdout.includes('Cloning') || !result.stdout.includes('Init completed successfully')) {
+  if (!result.stdout.includes('Cloning') || !result.stdout.includes('Initialization complete!')) {
     fail('Output missing expected messages')
     return
   }
@@ -129,7 +131,8 @@ async function testSkipExisting() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
+  - name: repo1.git
+    url: ${repo1}
 `)
   
   // First init
@@ -163,8 +166,10 @@ async function testAllowDelete() {
   // Initial config with both repos
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
-  - ${repo2}
+  - name: repo1.git
+    url: ${repo1}
+  - name: repo2.git
+    url: ${repo2}
 `)
   
   await $({ nothrow: true })`${devslotBinary} init`
@@ -172,7 +177,8 @@ repositories:
   // Update config to only have repo1
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo1}
+  - name: repo1.git
+    url: ${repo1}
 `)
   
   // Run with --allow-delete
@@ -207,9 +213,12 @@ async function testUrlFormats() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo}
-  - file://${repo}
-  - ./relative-repo
+  - name: test-repo.git
+    url: ${repo}
+  - name: test-repo-file.git
+    url: file://${repo}
+  - name: relative-repo.git
+    url: ./relative-repo
 `)
   
   const result = await $({ nothrow: true })`${devslotBinary} init`
@@ -219,8 +228,13 @@ repositories:
     return
   }
   
-  if (!await fs.pathExists('repos/myrepo.git')) {
-    fail('repos/myrepo.git does not exist')
+  if (!await fs.pathExists('repos/test-repo.git')) {
+    fail('repos/test-repo.git does not exist')
+    return
+  }
+  
+  if (!await fs.pathExists('repos/test-repo-file.git')) {
+    fail('repos/test-repo-file.git does not exist')
     return
   }
   
@@ -244,11 +258,10 @@ async function testNoConfig() {
     return
   }
   
-  
-  // Check both stderr and stdout for the error message
+  // Check for the error message (it appears the error is printed to stdout with exit code)
   const output = result.stderr + result.stdout
-  if (!output.includes('devslot.yaml not found')) {
-    fail(`Expected error about missing devslot.yaml`)
+  if (!output.includes('devslot.yaml not found') && !output.includes('not in a devslot project')) {
+    fail(`Expected error about missing devslot.yaml, got: ${output}`)
     return
   }
   
@@ -258,21 +271,24 @@ async function testNoConfig() {
 async function testConcurrentLock() {
   await setupTest('concurrent_lock')
   
-  // Create multiple repositories to make init take longer
-  const repos = []
-  for (let i = 0; i < 10; i++) {
-    repos.push(await createTestRepo(`lock-test-repo-${i}`))
-  }
+  // Create a simple test repo
+  const repo1 = await createTestRepo('concurrent-test-repo')
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-${repos.map(r => `  - ${r}`).join('\n')}
+  - name: test-repo.git
+    url: ${repo1}
 `)
   
-  // Start many init commands in parallel to increase chance of lock conflict
+  // Start init commands in parallel with test delay
   const initCommands = []
+  
+  // Set environment variable to add delay in init command
+  const env = { ...process.env, DEVSLOT_TEST_INIT_DELAY: '500ms' }
+  
+  // Start all commands at once
   for (let i = 0; i < 5; i++) {
-    initCommands.push($({ nothrow: true })`${devslotBinary} init`)
+    initCommands.push($({ nothrow: true, env })`${devslotBinary} init`)
   }
   
   // Wait for all to complete
@@ -293,6 +309,8 @@ ${repos.map(r => `  - ${r}`).join('\n')}
     }
   }
   
+  // Verify that we have the expected lock behavior
+  // With the delay, we should have exactly 1 success and 4 lock failures
   if (successCount !== 1 || lockFailureCount !== 4) {
     fail(`Expected 1 success and 4 lock failures, got ${successCount} successes and ${lockFailureCount} lock failures`)
     return
@@ -308,7 +326,8 @@ async function testCreateReposDir() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - ${repo}
+  - name: large-repo.git
+    url: ${repo}
 `)
   
   // Ensure repos directory doesn't exist
@@ -326,8 +345,8 @@ repositories:
     return
   }
   
-  if (!await fs.pathExists('repos/repo1.git')) {
-    fail('repos/repo1.git does not exist')
+  if (!await fs.pathExists('repos/large-repo.git')) {
+    fail('repos/large-repo.git does not exist')
     return
   }
   

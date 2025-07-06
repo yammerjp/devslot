@@ -1,17 +1,18 @@
-package main
+package lock
 
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 func TestFileLock(t *testing.T) {
 	t.Run("successful lock and unlock", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		lock := NewFileLock(tmpDir)
+		lock := New(filepath.Join(tmpDir, ".devslot.lock"))
 
-		err := lock.Lock()
+		err := lock.Acquire()
 		if err != nil {
 			t.Errorf("Lock() error = %v, want nil", err)
 		}
@@ -22,7 +23,7 @@ func TestFileLock(t *testing.T) {
 			t.Error("Lock file was not created")
 		}
 
-		err = lock.Unlock()
+		err = lock.Release()
 		if err != nil {
 			t.Errorf("Unlock() error = %v, want nil", err)
 		}
@@ -30,16 +31,17 @@ func TestFileLock(t *testing.T) {
 
 	t.Run("prevents concurrent locks", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		lock1 := NewFileLock(tmpDir)
-		lock2 := NewFileLock(tmpDir)
+		lockPath := filepath.Join(tmpDir, ".devslot.lock")
+		lock1 := New(lockPath)
+		lock2 := New(lockPath)
 
-		err := lock1.Lock()
+		err := lock1.Acquire()
 		if err != nil {
 			t.Errorf("First Lock() error = %v, want nil", err)
 		}
-		defer func() { _ = lock1.Unlock() }()
+		defer func() { _ = lock1.Release() }()
 
-		err = lock2.Lock()
+		err = lock2.Acquire()
 		if err == nil {
 			t.Error("Second Lock() expected error, got nil")
 		}
@@ -50,20 +52,20 @@ func TestFileLock(t *testing.T) {
 
 	t.Run("multiple unlock calls are safe", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		lock := NewFileLock(tmpDir)
+		lock := New(filepath.Join(tmpDir, ".devslot.lock"))
 
-		err := lock.Lock()
+		err := lock.Acquire()
 		if err != nil {
 			t.Errorf("Lock() error = %v, want nil", err)
 		}
 
-		err = lock.Unlock()
+		err = lock.Release()
 		if err != nil {
 			t.Errorf("First Unlock() error = %v, want nil", err)
 		}
 
 		// Second unlock should not error
-		err = lock.Unlock()
+		err = lock.Release()
 		if err != nil {
 			t.Errorf("Second Unlock() error = %v, want nil", err)
 		}
@@ -71,13 +73,13 @@ func TestFileLock(t *testing.T) {
 
 	t.Run("lock file contains PID", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		lock := NewFileLock(tmpDir)
+		lock := New(filepath.Join(tmpDir, ".devslot.lock"))
 
-		err := lock.Lock()
+		err := lock.Acquire()
 		if err != nil {
 			t.Errorf("Lock() error = %v, want nil", err)
 		}
-		defer func() { _ = lock.Unlock() }()
+		defer func() { _ = lock.Release() }()
 
 		lockPath := filepath.Join(tmpDir, ".devslot.lock")
 		content, err := os.ReadFile(lockPath)
@@ -89,4 +91,8 @@ func TestFileLock(t *testing.T) {
 			t.Error("Lock file does not contain PID information")
 		}
 	})
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && strings.Contains(s, substr)
 }
