@@ -1,6 +1,12 @@
 # devslot
 
-A development environment manager for multi-repository projects using Git worktrees.
+<p align="center">
+  <img src="assets/logo.jpg" alt="devslot logo" width="600">
+</p>
+
+<p align="center">
+  A development environment manager for multi-repository projects using Git worktrees.
+</p>
 
 ## Overview
 
