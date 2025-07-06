@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/yammerjp/devslot/internal/config"
+	"github.com/yammerjp/devslot/internal/errors"
 	"github.com/yammerjp/devslot/internal/lock"
 	"github.com/yammerjp/devslot/internal/slot"
 )
@@ -24,13 +25,13 @@ func (c *CreateCmd) Run(ctx *Context) error {
 
 	projectRoot, err := config.FindProjectRoot(currentDir)
 	if err != nil {
-		return fmt.Errorf("not in a devslot project: %w", err)
+		return err // config.FindProjectRoot already returns a user-friendly error
 	}
 
 	// Acquire lock
 	lockFile := lock.New(filepath.Join(projectRoot, ".devslot.lock"))
 	if err := lockFile.Acquire(); err != nil {
-		return fmt.Errorf("failed to acquire lock: %w", err)
+		return errors.LockFailed(err)
 	}
 	defer func() {
 		if err := lockFile.Release(); err != nil {

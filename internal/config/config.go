@@ -1,12 +1,11 @@
 package config
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/goccy/go-yaml"
+	"github.com/yammerjp/devslot/internal/errors"
 )
 
 // Config represents the devslot.yaml configuration
@@ -31,7 +30,7 @@ func Load(rootPath string) (*Config, error) {
 
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse YAML: %w", err)
+		return nil, errors.YAMLParseFailed(err)
 	}
 
 	// Default version to 1 if not specified
@@ -40,7 +39,7 @@ func Load(rootPath string) (*Config, error) {
 	}
 
 	if config.Version != 1 {
-		return nil, fmt.Errorf("unsupported config version: %d", config.Version)
+		return nil, errors.UnsupportedVersion(config.Version)
 	}
 
 	return &config, nil
@@ -57,7 +56,7 @@ func FindProjectRoot(startPath string) (string, error) {
 
 		parent := filepath.Dir(currentPath)
 		if parent == currentPath {
-			return "", errors.New("devslot.yaml not found in any parent directory")
+			return "", errors.ConfigNotFound()
 		}
 		currentPath = parent
 	}

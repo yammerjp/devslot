@@ -158,7 +158,7 @@ repositories: []
 			slotName:    "test-slot",
 			setupFunc:   func(t *testing.T, projectRoot string) error { return nil },
 			wantErr:     true,
-			errContains: "not in a devslot project",
+			errContains: "devslot.yaml not found",
 		},
 	}
 
