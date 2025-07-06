@@ -38,12 +38,18 @@ func (c *DestroyCmd) Run(ctx *Context) error {
 		}
 	}()
 
+	// Load configuration
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
 	// Destroy slot
 	mgr := slot.NewManager(projectRoot)
 	ctx.Printf("Destroying slot '%s'...\n", c.SlotName)
 	ctx.LogInfo("destroying slot", "slot", c.SlotName)
 
-	if err := mgr.Destroy(c.SlotName); err != nil {
+	if err := mgr.Destroy(c.SlotName, cfg); err != nil {
 		return fmt.Errorf("failed to destroy slot: %w", err)
 	}
 

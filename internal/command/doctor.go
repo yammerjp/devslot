@@ -65,7 +65,7 @@ func (c *DoctorCmd) Run(ctx *Context) error {
 	if cfg != nil {
 		ctx.Println("\nChecking repositories...")
 		for _, repo := range cfg.Repositories {
-			bareRepoPath := filepath.Join(projectRoot, "repos", repo.Name)
+			bareRepoPath := filepath.Join(projectRoot, "repos", repo.BareRepoName())
 			if git.IsValidRepository(bareRepoPath) {
 				ctx.Printf("  ✅ Repository %s is cloned\n", repo.Name)
 			} else {

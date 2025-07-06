@@ -71,7 +71,7 @@ async function testBasicReload() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -87,7 +87,7 @@ repositories:
   }
   
   // Verify slot still exists
-  if (!await fs.pathExists('slots/test-slot/repo.git')) {
+  if (!await fs.pathExists('slots/test-slot/repo')) {
     fail('Slot worktree missing after reload')
     return
   }
@@ -109,7 +109,7 @@ async function testReloadMissingWorktree() {
   // Start with one repo
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: ${repo1}
 `)
   
@@ -119,9 +119,9 @@ repositories:
   // Add second repo to config
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: ${repo1}
-  - name: repo2.git
+  - name: repo2
     url: ${repo2}
 `)
   
@@ -137,12 +137,12 @@ repositories:
   }
   
   // Check both worktrees exist
-  if (!await fs.pathExists('slots/my-slot/repo1.git')) {
+  if (!await fs.pathExists('slots/my-slot/repo1')) {
     fail('Original worktree missing')
     return
   }
   
-  if (!await fs.pathExists('slots/my-slot/repo2.git')) {
+  if (!await fs.pathExists('slots/my-slot/repo2')) {
     fail('New worktree not created by reload')
     return
   }
@@ -179,7 +179,7 @@ async function testReloadWithHook() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -222,7 +222,7 @@ async function testReloadFailingHook() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -268,9 +268,9 @@ async function testReloadAfterRepoRemoval() {
   // Start with two repos
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: keep.git
+  - name: keep
     url: ${repo1}
-  - name: remove.git
+  - name: remove
     url: ${repo2}
 `)
   
@@ -280,7 +280,7 @@ repositories:
   // Remove one repo from config
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: keep.git
+  - name: keep
     url: ${repo1}
 `)
   
@@ -293,7 +293,7 @@ repositories:
   }
   
   // Original worktree should remain
-  if (!await fs.pathExists('slots/multi-slot/keep.git')) {
+  if (!await fs.pathExists('slots/multi-slot/keep')) {
     fail('Remaining repo worktree missing')
     return
   }
@@ -310,7 +310,7 @@ async function testReloadCorruptedWorktree() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -318,7 +318,7 @@ repositories:
   await $({ nothrow: true })`${devslotBinary} create corrupt-slot`
   
   // Corrupt the worktree by removing .git file
-  await $`rm -f slots/corrupt-slot/repo.git/.git`
+  await $`rm -f slots/corrupt-slot/repo/.git`
   
   // Reload should handle this gracefully
   const result = await $({ nothrow: true })`${devslotBinary} reload corrupt-slot`
