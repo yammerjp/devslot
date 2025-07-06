@@ -77,9 +77,9 @@ async function testBasicCreate() {
   // Create devslot.yaml
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: ${repo1}
-  - name: repo2.git
+  - name: repo2
     url: ${repo2}
 `)
   
@@ -104,20 +104,20 @@ repositories:
     return
   }
   
-  if (!await fs.pathExists('slots/test-slot/repo1.git')) {
-    fail('slots/test-slot/repo1.git does not exist')
+  if (!await fs.pathExists('slots/test-slot/repo1')) {
+    fail('slots/test-slot/repo1 does not exist')
     return
   }
   
-  if (!await fs.pathExists('slots/test-slot/repo2.git')) {
-    fail('slots/test-slot/repo2.git does not exist')
+  if (!await fs.pathExists('slots/test-slot/repo2')) {
+    fail('slots/test-slot/repo2 does not exist')
     return
   }
   
   // Check if they are valid git repositories
-  const gitCheck = await $({ nothrow: true })`cd slots/test-slot/repo1.git && git status`
+  const gitCheck = await $({ nothrow: true })`cd slots/test-slot/repo1 && git status`
   if (!gitCheck.ok) {
-    fail('repo1.git is not a valid git repository')
+    fail('repo1 is not a valid git repository')
     return
   }
   
@@ -149,7 +149,7 @@ async function testCreateWithBranch() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -165,14 +165,14 @@ repositories:
   }
   
   // Check if on correct branch
-  const branchCheck = await $({ nothrow: true })`cd slots/feature-slot/repo.git && git branch --show-current`
+  const branchCheck = await $({ nothrow: true })`cd slots/feature-slot/repo && git branch --show-current`
   if (!branchCheck.ok || branchCheck.stdout.trim() !== 'feature-branch') {
     fail('Not on expected branch')
     return
   }
   
   // Check if feature file exists
-  if (!await fs.pathExists('slots/feature-slot/repo.git/feature.txt')) {
+  if (!await fs.pathExists('slots/feature-slot/repo/feature.txt')) {
     fail('Feature file not found in worktree')
     return
   }
@@ -187,7 +187,7 @@ async function testDuplicateSlot() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -244,7 +244,7 @@ async function testCreateWithoutInit() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: https://example.com/repo.git
 `)
   
@@ -272,7 +272,7 @@ async function testMultipleSlots() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -295,7 +295,7 @@ repositories:
   
   // Verify all slots exist
   for (const slot of slots) {
-    if (!await fs.pathExists(`slots/${slot.name}/repo.git`)) {
+    if (!await fs.pathExists(`slots/${slot.name}/repo`)) {
       fail(`Slot ${slot.name} not created properly`)
       return
     }
@@ -304,14 +304,14 @@ repositories:
   // Verify they are independent worktrees
   // Create different files in each
   for (const slot of slots) {
-    await fs.writeFile(`slots/${slot.name}/repo.git/file-${slot.name}.txt`, `Content for ${slot.name}`)
+    await fs.writeFile(`slots/${slot.name}/repo/file-${slot.name}.txt`, `Content for ${slot.name}`)
   }
   
   // Check that files don't exist in other worktrees
   for (let i = 0; i < slots.length; i++) {
     for (let j = 0; j < slots.length; j++) {
       if (i !== j) {
-        if (await fs.pathExists(`slots/${slots[i].name}/repo.git/file-${slots[j].name}.txt`)) {
+        if (await fs.pathExists(`slots/${slots[i].name}/repo/file-${slots[j].name}.txt`)) {
           fail('Worktrees are not independent')
           return
         }
