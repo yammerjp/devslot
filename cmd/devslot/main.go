@@ -22,11 +22,17 @@ type CLI struct {
 }
 
 type App struct {
-	parser *kong.Kong
-	writer io.Writer
+	parser      *kong.Kong
+	writer      io.Writer
+	exitHandler func(int)
 }
 
 func NewApp(writer io.Writer) *App {
+	app := &App{
+		writer:      writer,
+		exitHandler: os.Exit,
+	}
+	
 	cli := &CLI{}
 	parser, err := kong.New(cli,
 		kong.Name("devslot"),
@@ -35,7 +41,9 @@ func NewApp(writer io.Writer) *App {
 			Compact: true,
 		}),
 		kong.Writers(writer, writer),
-		kong.Exit(func(int) {}), // Override exit for testing
+		kong.Exit(func(code int) {
+			app.exitHandler(code)
+		}),
 		kong.Vars{
 			"version": "dev", // This should be set by ldflags during build
 		},
@@ -44,17 +52,20 @@ func NewApp(writer io.Writer) *App {
 		panic(err)
 	}
 
-	return &App{
-		parser: parser,
-		writer: writer,
-	}
+	app.parser = parser
+	return app
+}
+
+// SetExitHandler sets a custom exit handler for testing
+func (app *App) SetExitHandler(handler func(int)) {
+	app.exitHandler = handler
 }
 
 func (app *App) Run(args []string) error {
 	// Show help if no arguments provided
 	if len(args) == 0 {
-		_, _ = app.parser.Parse([]string{"--help"})
-		return nil
+		_, err := app.parser.Parse([]string{"--help"})
+		return err
 	}
 
 	ctx, err := app.parser.Parse(args)
