@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.2.3](https://github.com/yammerjp/devslot/compare/v0.2.2...v0.2.3) - 2025-07-06
+- Add E2E tests to CI workflow by @yammerjp in https://github.com/yammerjp/devslot/pull/19
+- Refactor: Implement package structure following golang-standards/project-layout by @yammerjp in https://github.com/yammerjp/devslot/pull/21
+- Fix help display and improve CLI usability by @yammerjp in https://github.com/yammerjp/devslot/pull/23
+- Improve logging and exit handling by @yammerjp in https://github.com/yammerjp/devslot/pull/22
+- Enhance create command implementation by @yammerjp in https://github.com/yammerjp/devslot/pull/25
+- Add tests for list command by @yammerjp in https://github.com/yammerjp/devslot/pull/24
+- Add executable hook scripts to boilerplate command by @yammerjp in https://github.com/yammerjp/devslot/pull/26
+
 ## [v0.2.2](https://github.com/yammerjp/devslot/compare/v0.2.1...v0.2.2) - 2025-07-05
 - Implement init command for syncing bare repositories by @yammerjp in https://github.com/yammerjp/devslot/pull/7
 - Integrate GoReleaser into tagpr workflow by @yammerjp in https://github.com/yammerjp/devslot/pull/18
