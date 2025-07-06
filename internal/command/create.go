@@ -12,6 +12,7 @@ import (
 
 type CreateCmd struct {
 	SlotName string `arg:"" help:"Name of the slot to create"`
+	Branch   string `short:"b" help:"Branch to checkout in the worktrees (default: repository default branch)"`
 }
 
 func (c *CreateCmd) Run(ctx *Context) error {
@@ -46,13 +47,24 @@ func (c *CreateCmd) Run(ctx *Context) error {
 	// Create slot
 	mgr := slot.NewManager(projectRoot)
 	ctx.Printf("Creating slot '%s'...\n", c.SlotName)
-	ctx.LogInfo("creating slot", "name", c.SlotName)
+	ctx.LogInfo("creating slot", "name", c.SlotName, "branch", c.Branch)
 
-	if err := mgr.Create(c.SlotName, cfg); err != nil {
+	// Prepare options
+	opts := &slot.CreateOptions{
+		Branch: c.Branch,
+	}
+
+	// Show repositories that will be created
+	ctx.LogDebug("repositories to create", "count", len(cfg.Repositories))
+	for _, repo := range cfg.Repositories {
+		ctx.Printf("  - %s\n", repo.Name)
+	}
+
+	if err := mgr.Create(c.SlotName, cfg, opts); err != nil {
 		return fmt.Errorf("failed to create slot: %w", err)
 	}
 
-	ctx.Printf("Slot '%s' created successfully!\n", c.SlotName)
+	ctx.Printf("\nSlot '%s' created successfully!\n", c.SlotName)
 	ctx.Printf("You can now work in: %s/slots/%s\n", projectRoot, c.SlotName)
 	ctx.LogInfo("slot created successfully", "name", c.SlotName, "path", filepath.Join(projectRoot, "slots", c.SlotName))
 

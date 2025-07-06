@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 )
@@ -125,6 +126,74 @@ func Chdir(t *testing.T, dir string) func() {
 	return func() {
 		if err := os.Chdir(originalDir); err != nil {
 			t.Logf("Warning: failed to restore directory: %v", err)
+		}
+	}
+}
+
+// InitGitRepo initializes a git repository in the given directory
+func InitGitRepo(t *testing.T, dir string) {
+	t.Helper()
+
+	cmd := exec.Command("git", "init")
+	cmd.Dir = dir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to init git repo: %v\nOutput: %s", err, output)
+	}
+
+	// Configure git user for commits
+	cmd = exec.Command("git", "config", "user.email", "test@example.com")
+	cmd.Dir = dir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to config user.email: %v\nOutput: %s", err, output)
+	}
+
+	cmd = exec.Command("git", "config", "user.name", "Test User")
+	cmd.Dir = dir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to config user.name: %v\nOutput: %s", err, output)
+	}
+}
+
+// InitBareRepo initializes a bare git repository in the given directory
+func InitBareRepo(t *testing.T, dir string) {
+	t.Helper()
+
+	cmd := exec.Command("git", "init", "--bare", dir)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to init bare repo: %v\nOutput: %s", err, output)
+	}
+
+	// Create a temporary non-bare repo to push initial commit
+	tempDir := TempDir(t)
+	InitGitRepo(t, tempDir)
+
+	// Create initial commit
+	CreateFile(t, filepath.Join(tempDir, "README.md"), "# Test Repository")
+	cmd = exec.Command("git", "add", ".")
+	cmd.Dir = tempDir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to add files: %v\nOutput: %s", err, output)
+	}
+
+	cmd = exec.Command("git", "commit", "-m", "Initial commit")
+	cmd.Dir = tempDir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to commit: %v\nOutput: %s", err, output)
+	}
+
+	// Push to bare repo
+	cmd = exec.Command("git", "push", dir, "master")
+	cmd.Dir = tempDir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		// Try with main branch if master fails
+		cmd = exec.Command("git", "branch", "-M", "main")
+		cmd.Dir = tempDir
+		cmd.Run()
+		
+		cmd = exec.Command("git", "push", dir, "main")
+		cmd.Dir = tempDir
+		if output2, err2 := cmd.CombinedOutput(); err2 != nil {
+			t.Fatalf("failed to push to bare repo: %v\nOutput: %s\n%s", err2, output, output2)
 		}
 	}
 }
