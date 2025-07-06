@@ -182,7 +182,7 @@ func TestBoilerplateCmd_WithSubdirectory(t *testing.T) {
 
 	// Check that files were created in subdirectory
 	projectDir := filepath.Join(tempDir, "my-project")
-	
+
 	// Check directory was created
 	if !testutil.DirExists(t, projectDir) {
 		t.Error("Project directory was not created")
