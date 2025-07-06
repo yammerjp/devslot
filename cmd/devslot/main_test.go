@@ -42,7 +42,7 @@ func TestApp_Run(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			app := NewApp(&buf)
-			
+
 			// Override exit handler for testing
 			exitCode := -1
 			app.SetExitHandler(func(code int) {
@@ -60,7 +60,7 @@ func TestApp_Run(t *testing.T) {
 					t.Errorf("App.Run() output = %v, want to contain %v", output, tt.wantOutputText)
 				}
 			}
-			
+
 			// For help cases, check that exit was called with 0
 			if tt.name == "help command" || tt.name == "no arguments shows help" {
 				if exitCode != 0 {

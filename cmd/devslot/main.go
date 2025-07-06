@@ -32,7 +32,7 @@ func NewApp(writer io.Writer) *App {
 		writer:      writer,
 		exitHandler: os.Exit,
 	}
-	
+
 	cli := &CLI{}
 	parser, err := kong.New(cli,
 		kong.Name("devslot"),
