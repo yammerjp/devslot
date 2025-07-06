@@ -13,6 +13,12 @@ func TestApp_Run(t *testing.T) {
 		wantOutputText string
 	}{
 		{
+			name:           "no arguments shows help",
+			args:           []string{},
+			wantErr:        false,
+			wantOutputText: "Usage: devslot <command>",
+		},
+		{
 			name:           "help command",
 			args:           []string{"--help"},
 			wantErr:        true, // kong returns an error for help

@@ -31,7 +31,6 @@ func NewApp(writer io.Writer) *App {
 	parser, err := kong.New(cli,
 		kong.Name("devslot"),
 		kong.Description("Development environment manager for multi-repo worktrees"),
-		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,
 		}),
@@ -52,6 +51,12 @@ func NewApp(writer io.Writer) *App {
 }
 
 func (app *App) Run(args []string) error {
+	// Show help if no arguments provided
+	if len(args) == 0 {
+		_, _ = app.parser.Parse([]string{"--help"})
+		return nil
+	}
+
 	ctx, err := app.parser.Parse(args)
 	if err != nil {
 		return err
