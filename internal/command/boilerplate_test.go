@@ -2,6 +2,7 @@ package command
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -32,9 +33,9 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 		"Created directory: slots",
 		"Created file: devslot.yaml",
 		"Updated file: .gitignore",
-		"Created hook example: hooks/post-create.example",
-		"Created hook example: hooks/pre-destroy.example",
-		"Created hook example: hooks/post-reload.example",
+		"Created hook script: hooks/post-create",
+		"Created hook script: hooks/pre-destroy",
+		"Created hook script: hooks/post-reload",
 		"Boilerplate project structure created successfully!",
 	}
 
@@ -57,9 +58,9 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 	files := []string{
 		"devslot.yaml",
 		".gitignore",
-		"hooks/post-create.example",
-		"hooks/pre-destroy.example",
-		"hooks/post-reload.example",
+		"hooks/post-create",
+		"hooks/pre-destroy",
+		"hooks/post-reload",
 	}
 	for _, file := range files {
 		filePath := filepath.Join(tempDir, file)
@@ -81,6 +82,25 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 	gitignore := testutil.ReadFile(t, filepath.Join(tempDir, ".gitignore"))
 	if !contains(gitignore, "/repos/") || !contains(gitignore, "/slots/") {
 		t.Error(".gitignore missing devslot directories")
+	}
+
+	// Check hook files are executable
+	hookFiles := []string{
+		"hooks/post-create",
+		"hooks/pre-destroy",
+		"hooks/post-reload",
+	}
+	for _, hook := range hookFiles {
+		hookPath := filepath.Join(tempDir, hook)
+		info, err := os.Stat(hookPath)
+		if err != nil {
+			t.Errorf("Failed to get file info for %s: %v", hook, err)
+			continue
+		}
+		// Check if executable (0755 = -rwxr-xr-x)
+		if info.Mode().Perm() != 0755 {
+			t.Errorf("Hook file %s has incorrect permissions: %v (expected 0755)", hook, info.Mode().Perm())
+		}
 	}
 }
 
