@@ -16,9 +16,9 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 	// Change to temp directory
 	defer testutil.Chdir(t, tempDir)()
 
-	// Run boilerplate command
+	// Run boilerplate command with current directory
 	var buf bytes.Buffer
-	cmd := &BoilerplateCmd{}
+	cmd := &BoilerplateCmd{Dir: "."}
 	ctx := &Context{Writer: &buf}
 
 	if err := cmd.Run(ctx); err != nil {
@@ -112,7 +112,7 @@ func TestBoilerplateCmd_RunTwice(t *testing.T) {
 	defer testutil.Chdir(t, tempDir)()
 
 	// Run boilerplate command twice
-	cmd := &BoilerplateCmd{}
+	cmd := &BoilerplateCmd{Dir: "."}
 	ctx := &Context{Writer: &bytes.Buffer{}}
 
 	// First run
@@ -143,7 +143,7 @@ func TestBoilerplateCmd_ExistingGitignore(t *testing.T) {
 	testutil.CreateFile(t, filepath.Join(tempDir, ".gitignore"), existingContent)
 
 	// Run boilerplate command
-	cmd := &BoilerplateCmd{}
+	cmd := &BoilerplateCmd{Dir: "."}
 	ctx := &Context{Writer: &bytes.Buffer{}}
 
 	if err := cmd.Run(ctx); err != nil {

@@ -35,18 +35,24 @@
 
 ## 今後の改善項目
 
-### 高優先度
+### 高優先度（本セッションで対応予定）
 1. **環境変数の統一**
    - フックに渡される環境変数をREADMEの記載に合わせる
-   - `DEVSLOT_ROOT`, `DEVSLOT_SLOT_NAME`, `DEVSLOT_SLOT_DIR`, `DEVSLOT_REPOS_DIR`の実装
+   - 実装変更が必要:
+     - `DEVSLOT_PROJECT_ROOT` → `DEVSLOT_ROOT`
+     - `DEVSLOT_SLOT` → `DEVSLOT_SLOT_NAME`
+     - `DEVSLOT_SLOT_DIR`を追加（スロットディレクトリのフルパス）
+     - `DEVSLOT_REPOS_DIR`を追加（reposディレクトリのフルパス）
 
 2. **boilerplateコマンドの改善**
-   - ディレクトリ引数のサポート追加
+   - ディレクトリ引数のサポート追加（必須、`.`も可）
    - 指定されたディレクトリがない場合は作成
+   - READMEに記載の通り `devslot boilerplate <dir>` 形式に
 
-3. **devslot.yaml簡易フォーマット対応**
-   - URLのみのリスト形式をサポート
-   - name/urlの詳細形式と両方対応
+3. **READMEの修正**
+   - devslot.yamlの簡易フォーマット（URLのみの配列）の記載を削除
+   - 現在の実装に合わせて name/url 形式のみ記載
+   - createコマンドの-b/--branchオプションの説明を追加
 
 ### 中優先度
 4. **ドキュメント更新**

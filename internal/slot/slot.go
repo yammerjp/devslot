@@ -59,24 +59,21 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 			return fmt.Errorf("bare repository %s does not exist (run 'devslot init' first)", repo.Name)
 		}
 
-		// Determine which branch to use
-		branch := opts.Branch
-		if branch == "" {
-			// Get default branch
-			defaultBranch, err := git.GetDefaultBranch(bareRepoPath)
-			if err != nil {
+		// Create worktree
+		if opts.Branch != "" {
+			// Use specified branch
+			if err := git.CreateWorktree(bareRepoPath, worktreePath, opts.Branch); err != nil {
 				// Cleanup on failure
 				os.RemoveAll(slotPath)
-				return fmt.Errorf("failed to determine default branch for %s: %w", repo.Name, err)
+				return fmt.Errorf("failed to create worktree for %s on branch %s: %w", repo.Name, opts.Branch, err)
 			}
-			branch = defaultBranch
-		}
-
-		// Create worktree
-		if err := git.CreateWorktree(bareRepoPath, worktreePath, branch); err != nil {
-			// Cleanup on failure
-			os.RemoveAll(slotPath)
-			return fmt.Errorf("failed to create worktree for %s on branch %s: %w", repo.Name, branch, err)
+		} else {
+			// Create new branch with fetch
+			if err := git.CreateWorktreeWithFetch(bareRepoPath, worktreePath, name); err != nil {
+				// Cleanup on failure
+				os.RemoveAll(slotPath)
+				return fmt.Errorf("failed to create worktree for %s: %w", repo.Name, err)
+			}
 		}
 	}
 
