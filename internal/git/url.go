@@ -1,4 +1,4 @@
-package main
+package git
 
 import (
 	"net/url"
@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-// parseRepoURL parses various repository URL formats and returns the repository name
+// ParseRepoURL parses various repository URL formats and returns the repository name
 // Supports:
 // - HTTPS URLs: https://github.com/user/repo.git
 // - SSH URLs: git@github.com:user/repo.git
 // - File URLs: file:///path/to/repo
 // - Local paths: /path/to/repo or ./relative/path
-func parseRepoURL(repoURL string) (name string, isLocal bool) {
+func ParseRepoURL(repoURL string) (name string, isLocal bool) {
 	// Remove trailing .git if present
 	repoURL = strings.TrimSuffix(repoURL, ".git")
 

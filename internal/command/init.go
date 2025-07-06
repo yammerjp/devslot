@@ -7,9 +7,12 @@ import (
 
 	"github.com/yammerjp/devslot/internal/config"
 	"github.com/yammerjp/devslot/internal/git"
+	"github.com/yammerjp/devslot/internal/lock"
 )
 
-type InitCmd struct{}
+type InitCmd struct {
+	AllowDelete bool `help:"Delete repositories no longer listed in devslot.yaml"`
+}
 
 func (c *InitCmd) Run(ctx *Context) error {
 	// Find project root
@@ -22,6 +25,17 @@ func (c *InitCmd) Run(ctx *Context) error {
 	if err != nil {
 		return fmt.Errorf("not in a devslot project: %w", err)
 	}
+
+	// Acquire lock
+	l := lock.New(filepath.Join(projectRoot, ".devslot.lock"))
+	if err := l.Acquire(); err != nil {
+		return err
+	}
+	defer func() {
+		if err := l.Release(); err != nil {
+			fmt.Fprintf(ctx.Writer, "Warning: failed to release lock: %v\n", err)
+		}
+	}()
 
 	// Load configuration
 	cfg, err := config.Load(projectRoot)

@@ -1,4 +1,4 @@
-package main
+package git
 
 import "testing"
 
@@ -79,12 +79,12 @@ func TestParseRepoURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotName, gotLocal := parseRepoURL(tt.repoURL)
+			gotName, gotLocal := ParseRepoURL(tt.repoURL)
 			if gotName != tt.wantName {
-				t.Errorf("parseRepoURL() name = %v, want %v", gotName, tt.wantName)
+				t.Errorf("ParseRepoURL() name = %v, want %v", gotName, tt.wantName)
 			}
 			if gotLocal != tt.wantLocal {
-				t.Errorf("parseRepoURL() isLocal = %v, want %v", gotLocal, tt.wantLocal)
+				t.Errorf("ParseRepoURL() isLocal = %v, want %v", gotLocal, tt.wantLocal)
 			}
 		})
 	}
