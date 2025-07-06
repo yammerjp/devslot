@@ -63,5 +63,6 @@ func main() {
 	app := NewApp(os.Stdout)
 	if err := app.Run(os.Args[1:]); err != nil {
 		app.parser.FatalIfErrorf(err)
+		os.Exit(1)
 	}
 }

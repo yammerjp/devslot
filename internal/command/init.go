@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/yammerjp/devslot/internal/config"
 	"github.com/yammerjp/devslot/internal/git"
@@ -49,6 +50,13 @@ func (c *InitCmd) Run(ctx *Context) error {
 		return fmt.Errorf("failed to create repos directory: %w", err)
 	}
 
+	// Test mode sleep for concurrent lock testing
+	if testDelay := os.Getenv("DEVSLOT_TEST_INIT_DELAY"); testDelay != "" {
+		if delay, err := time.ParseDuration(testDelay); err == nil {
+			time.Sleep(delay)
+		}
+	}
+
 	// Clone each repository as bare
 	for _, repo := range cfg.Repositories {
 		bareRepoPath := filepath.Join(reposDir, repo.Name)
@@ -64,6 +72,32 @@ func (c *InitCmd) Run(ctx *Context) error {
 			return fmt.Errorf("failed to clone %s: %w", repo.Name, err)
 		}
 		fmt.Fprintf(ctx.Writer, "Successfully cloned %s\n", repo.Name)
+	}
+
+	// Handle --allow-delete flag
+	if c.AllowDelete {
+		// Get list of existing repositories
+		entries, err := os.ReadDir(reposDir)
+		if err != nil {
+			return fmt.Errorf("failed to read repos directory: %w", err)
+		}
+
+		// Build a map of configured repositories
+		configuredRepos := make(map[string]bool)
+		for _, repo := range cfg.Repositories {
+			configuredRepos[repo.Name] = true
+		}
+
+		// Remove repositories not in configuration
+		for _, entry := range entries {
+			if entry.IsDir() && !configuredRepos[entry.Name()] {
+				repoPath := filepath.Join(reposDir, entry.Name())
+				fmt.Fprintf(ctx.Writer, "Removing unlisted repository: %s\n", entry.Name())
+				if err := os.RemoveAll(repoPath); err != nil {
+					fmt.Fprintf(ctx.Writer, "Warning: failed to remove %s: %v\n", entry.Name(), err)
+				}
+			}
+		}
 	}
 
 	fmt.Fprintln(ctx.Writer, "\nInitialization complete!")
