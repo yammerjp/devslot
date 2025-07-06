@@ -12,7 +12,7 @@ import (
 
 type CreateCmd struct {
 	SlotName string `arg:"" help:"Name of the slot to create"`
-	Branch   string `short:"b" help:"Branch to checkout in the worktrees (default: repository default branch)"`
+	Branch   string `short:"b" help:"Branch to checkout (if not specified, creates new branch with automatic naming)"`
 }
 
 func (c *CreateCmd) Run(ctx *Context) error {

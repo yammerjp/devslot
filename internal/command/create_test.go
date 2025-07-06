@@ -3,17 +3,15 @@ package command
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/yammerjp/devslot/internal/testutil"
 )
 
 func TestCreateCmd_Run(t *testing.T) {
-	// Skip if running in CI to avoid network/git operations
-	if os.Getenv("CI") == "true" {
-		t.Skip("Skipping create command tests in CI")
-	}
 
 	tests := []struct {
 		name         string
@@ -42,6 +40,11 @@ repositories:
 					return err
 				}
 				testutil.InitBareRepo(t, repo1Path)
+
+				// Set git config for test
+				cmd := exec.Command("git", "config", "--global", "user.email", "test@example.com")
+				_ = cmd.Run() // Ignore error in test setup
+
 				return nil
 			},
 			wantErr: false,
@@ -55,6 +58,19 @@ repositories:
 				worktreePath := filepath.Join(slotPath, "repo1.git")
 				if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
 					t.Error("expected worktree to exist")
+				}
+
+				// Check if we're on the expected branch
+				// The branch should be devslot/test/test-slot
+				cmd := exec.Command("git", "-C", worktreePath, "branch", "--show-current")
+				output, err := cmd.Output()
+				if err != nil {
+					t.Errorf("failed to get current branch: %v", err)
+				}
+				branch := strings.TrimSpace(string(output))
+				// Should be "devslot/test/test-slot" based on git email
+				if !strings.Contains(branch, "test-slot") || !strings.Contains(branch, "devslot/test/") {
+					t.Errorf("expected branch to be 'devslot/test/test-slot', got %q", branch)
 				}
 			},
 		},

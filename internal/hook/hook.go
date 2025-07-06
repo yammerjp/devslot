@@ -54,8 +54,10 @@ func (r *Runner) Run(hookType Type, slotName string, env map[string]string) erro
 
 	// Set environment variables
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_SLOT=%s", slotName))
-	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_PROJECT_ROOT=%s", r.projectRoot))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_ROOT=%s", r.projectRoot))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_SLOT_NAME=%s", slotName))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_SLOT_DIR=%s", filepath.Join(r.projectRoot, "slots", slotName)))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_REPOS_DIR=%s", filepath.Join(r.projectRoot, "repos")))
 
 	// Add custom environment variables
 	for k, v := range env {

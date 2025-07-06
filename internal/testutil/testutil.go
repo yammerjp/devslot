@@ -167,6 +167,13 @@ func InitBareRepo(t *testing.T, dir string) {
 	tempDir := TempDir(t)
 	InitGitRepo(t, tempDir)
 
+	// Add the bare repo as origin
+	cmd = exec.Command("git", "remote", "add", "origin", dir)
+	cmd.Dir = tempDir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to add remote: %v\nOutput: %s", err, output)
+	}
+
 	// Create initial commit
 	CreateFile(t, filepath.Join(tempDir, "README.md"), "# Test Repository")
 	cmd = exec.Command("git", "add", ".")
@@ -181,22 +188,64 @@ func InitBareRepo(t *testing.T, dir string) {
 		t.Fatalf("failed to commit: %v\nOutput: %s", err, output)
 	}
 
-	// Push to bare repo
-	cmd = exec.Command("git", "push", dir, "master")
+	// Try pushing with main branch first (modern default)
+	cmd = exec.Command("git", "branch", "-M", "main")
+	cmd.Dir = tempDir
+	_ = cmd.Run() // Ignore error as it might already be main
+
+	// Push to bare repo with -u to set upstream
+	cmd = exec.Command("git", "push", "-u", "origin", "main")
 	cmd.Dir = tempDir
 	if output, err := cmd.CombinedOutput(); err != nil {
-		// Try with main branch if master fails
-		cmd = exec.Command("git", "branch", "-M", "main")
+		// Try with master branch if main fails
+		cmd = exec.Command("git", "branch", "-M", "master")
 		cmd.Dir = tempDir
-		if err := cmd.Run(); err != nil {
-			// Log warning but don't fail, as this is a fallback operation
-			t.Logf("Warning: failed to rename branch to main: %v", err)
-		}
+		_ = cmd.Run() // Ignore error intentionally
 
-		cmd = exec.Command("git", "push", dir, "main")
+		cmd = exec.Command("git", "push", "-u", "origin", "master")
 		cmd.Dir = tempDir
 		if output2, err2 := cmd.CombinedOutput(); err2 != nil {
 			t.Fatalf("failed to push to bare repo: %v\nOutput: %s\n%s", err2, output, output2)
+		}
+	}
+
+	// Set HEAD in the bare repo to point to the default branch
+	cmd = exec.Command("git", "symbolic-ref", "HEAD", "refs/heads/main")
+	cmd.Dir = dir
+	if err := cmd.Run(); err != nil {
+		// Try master if main fails
+		cmd = exec.Command("git", "symbolic-ref", "HEAD", "refs/heads/master")
+		cmd.Dir = dir
+		_ = cmd.Run() // Ignore error intentionally
+	}
+
+	// Don't configure remote origin for test repos
+	// This prevents fetch attempts during tests
+
+	// Set up refs/remotes/origin/HEAD to point to main/master
+	originHeadPath := filepath.Join(dir, "refs", "remotes", "origin")
+	if err := os.MkdirAll(originHeadPath, 0755); err != nil {
+		t.Fatalf("Failed to create origin directory: %v", err)
+	}
+
+	// Check which branch exists and set origin/HEAD accordingly
+	if _, err := os.Stat(filepath.Join(dir, "refs", "heads", "main")); err == nil {
+		if err := os.WriteFile(filepath.Join(originHeadPath, "HEAD"), []byte("ref: refs/remotes/origin/main\n"), 0644); err != nil {
+			t.Fatalf("Failed to write origin/HEAD: %v", err)
+		}
+		// Copy main to origin/main
+		mainContent, _ := os.ReadFile(filepath.Join(dir, "refs", "heads", "main"))
+		if err := os.WriteFile(filepath.Join(originHeadPath, "main"), mainContent, 0644); err != nil {
+			t.Fatalf("Failed to write origin/main: %v", err)
+		}
+	} else if _, err := os.Stat(filepath.Join(dir, "refs", "heads", "master")); err == nil {
+		if err := os.WriteFile(filepath.Join(originHeadPath, "HEAD"), []byte("ref: refs/remotes/origin/master\n"), 0644); err != nil {
+			t.Fatalf("Failed to write origin/HEAD: %v", err)
+		}
+		// Copy master to origin/master
+		masterContent, _ := os.ReadFile(filepath.Join(dir, "refs", "heads", "master"))
+		if err := os.WriteFile(filepath.Join(originHeadPath, "master"), masterContent, 0644); err != nil {
+			t.Fatalf("Failed to write origin/master: %v", err)
 		}
 	}
 }

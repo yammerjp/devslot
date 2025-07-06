@@ -9,7 +9,7 @@ USAGE:
 COMMANDS:
   boilerplate <dir>      Generate initial project structure in the specified directory
   init [--allow-delete]  Sync bare repositories defined in devslot.yaml into repos/
-  create <slot>          Create a new slot (multi-repo worktree environment)
+  create <slot> [-b <branch>]  Create a new slot (multi-repo worktree environment)
   destroy <slot>         Remove the specified slot (runs pre-destroy hook first)
   reload <slot>          Ensure all worktrees exist for the slot and run post-reload hook
   list                   List all existing slots
@@ -19,6 +19,7 @@ COMMANDS:
 FLAGS:
   -h, --help             Show this help message
   -v, --version          Show version (alias for `version`)
+  --verbose              Enable verbose logging
 
 NOTES:
   - All operations are scoped to the devslot project root directory
@@ -64,8 +65,10 @@ NOTES:
   - devslot.yaml example:
       version: 1
       repositories:
-        - https://github.com/example/app1
-        - https://github.com/example/app2
+        - name: app1.git
+          url: https://github.com/example/app1.git
+        - name: app2.git
+          url: https://github.com/example/app2.git
 
   - repos/ and slots/ are ignored from version control (see boilerplate .gitignore)
 
