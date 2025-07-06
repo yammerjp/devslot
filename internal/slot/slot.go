@@ -1,13 +1,14 @@
 package slot
 
 import (
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/yammerjp/devslot/internal/config"
+	"github.com/yammerjp/devslot/internal/errors"
 	"github.com/yammerjp/devslot/internal/git"
 	"github.com/yammerjp/devslot/internal/hook"
 )
@@ -39,7 +40,7 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 
 	slotPath := m.getSlotPath(name)
 	if _, err := os.Stat(slotPath); err == nil {
-		return fmt.Errorf("slot %s already exists", name)
+		return errors.SlotAlreadyExists(name)
 	}
 
 	// Create slot directory
@@ -65,14 +66,14 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 			if err := git.CreateWorktree(bareRepoPath, worktreePath, opts.Branch); err != nil {
 				// Cleanup on failure
 				os.RemoveAll(slotPath)
-				return fmt.Errorf("failed to create worktree for %s on branch %s: %w", repo.Name, opts.Branch, err)
+				return errors.WorktreeFailed(repo.Name, err)
 			}
 		} else {
 			// Create new branch with fetch
 			if err := git.CreateWorktreeWithFetch(bareRepoPath, worktreePath, name); err != nil {
 				// Cleanup on failure
 				os.RemoveAll(slotPath)
-				return fmt.Errorf("failed to create worktree for %s: %w", repo.Name, err)
+				return errors.WorktreeFailed(repo.Name, err)
 			}
 		}
 	}
@@ -93,7 +94,7 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 func (m *Manager) Destroy(name string) error {
 	slotPath := m.getSlotPath(name)
 	if _, err := os.Stat(slotPath); os.IsNotExist(err) {
-		return fmt.Errorf("slot %s does not exist", name)
+		return errors.SlotNotFound(name)
 	}
 
 	// Run pre-destroy hook
@@ -157,7 +158,7 @@ func (m *Manager) List() ([]string, error) {
 func (m *Manager) Reload(name string, cfg *config.Config) error {
 	slotPath := m.getSlotPath(name)
 	if _, err := os.Stat(slotPath); os.IsNotExist(err) {
-		return fmt.Errorf("slot %s does not exist", name)
+		return errors.SlotNotFound(name)
 	}
 
 	// Check each repository
@@ -196,15 +197,15 @@ func (m *Manager) getSlotPath(name string) string {
 // validateSlotName validates the slot name
 func (m *Manager) validateSlotName(name string) error {
 	if name == "" {
-		return errors.New("slot name cannot be empty")
+		return stderrors.New("slot name cannot be empty")
 	}
 
 	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
-		return errors.New("slot name cannot contain path separators")
+		return stderrors.New("slot name cannot contain path separators")
 	}
 
 	if name == "." || name == ".." {
-		return errors.New("invalid slot name")
+		return stderrors.New("invalid slot name")
 	}
 
 	return nil

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/yammerjp/devslot/internal/errors"
 )
 
 // CloneBare clones a repository as a bare repository
@@ -133,7 +135,7 @@ func GetDefaultBranch(bareRepoPath string) (string, error) {
 	}
 
 	if branch == "" {
-		return "", fmt.Errorf("no branches found in repository")
+		return "", errors.NoBranchesFound()
 	}
 
 	return branch, nil
@@ -230,7 +232,7 @@ func CreateWorktreeWithFetch(bareRepoPath, worktreePath, slotName string) error 
 
 	// 1. Fetch latest changes
 	if err := Fetch(bareRepoPath); err != nil {
-		return fmt.Errorf("failed to fetch latest changes: %w", err)
+		return errors.FetchFailed(err)
 	}
 
 	// 2. Get default branch

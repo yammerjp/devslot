@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/yammerjp/devslot/internal/errors"
 )
 
 // Type represents the type of hook
@@ -44,7 +46,7 @@ func (r *Runner) Run(hookType Type, slotName string, env map[string]string) erro
 
 	// Check if file is executable
 	if info.Mode().Perm()&0111 == 0 {
-		return fmt.Errorf("hook %s is not executable", hookType)
+		return errors.HookNotExecutable(string(hookType))
 	}
 
 	// Prepare command
@@ -66,7 +68,7 @@ func (r *Runner) Run(hookType Type, slotName string, env map[string]string) erro
 
 	// Execute hook
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("hook %s failed: %w", hookType, err)
+		return errors.HookFailed(string(hookType), err)
 	}
 
 	return nil

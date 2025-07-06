@@ -37,7 +37,7 @@ func TestInitCmd_Run(t *testing.T) {
 				// Don't create devslot.yaml
 			},
 			wantErr:     true,
-			errContains: "not in a devslot project",
+			errContains: "devslot.yaml not found",
 		},
 		{
 			name: "empty repository list",
@@ -216,7 +216,7 @@ repositories: []
 	if err == nil {
 		t.Error("expected error due to lock contention, got nil")
 	}
-	if !strings.Contains(err.Error(), "another devslot process") {
+	if !strings.Contains(err.Error(), "another devslot process") && !strings.Contains(err.Error(), "lock is already held") {
 		t.Errorf("expected lock error, got: %v", err)
 	}
 }

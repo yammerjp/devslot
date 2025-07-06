@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/yammerjp/devslot/internal/config"
+	"github.com/yammerjp/devslot/internal/errors"
 	"github.com/yammerjp/devslot/internal/git"
 	"github.com/yammerjp/devslot/internal/lock"
 )
@@ -25,7 +26,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 	ctx.LogDebug("looking for project root", "currentDir", currentDir)
 	projectRoot, err := config.FindProjectRoot(currentDir)
 	if err != nil {
-		return fmt.Errorf("not in a devslot project: %w", err)
+		return err // config.FindProjectRoot already returns a user-friendly error
 	}
 	ctx.LogDebug("found project root", "projectRoot", projectRoot)
 
@@ -73,7 +74,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 		ctx.Printf("Cloning %s from %s...\n", repo.Name, repo.URL)
 		ctx.LogInfo("cloning repository", "name", repo.Name, "url", repo.URL)
 		if err := git.CloneBare(repo.URL, bareRepoPath); err != nil {
-			return fmt.Errorf("failed to clone %s: %w", repo.Name, err)
+			return errors.CloneFailed(repo.Name, err)
 		}
 		ctx.Printf("Successfully cloned %s\n", repo.Name)
 	}
