@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.3.0](https://github.com/yammerjp/devslot/compare/v0.2.5...v0.3.0) - 2025-07-06
+- Remove Windows support from GoReleaser configuration by @yammerjp in https://github.com/yammerjp/devslot/pull/30
+- feat: improve error messages with actionable suggestions by @yammerjp in https://github.com/yammerjp/devslot/pull/33
+- feat: add post-init hook support by @yammerjp in https://github.com/yammerjp/devslot/pull/35
+- Add comprehensive E2E tests for all devslot commands by @yammerjp in https://github.com/yammerjp/devslot/pull/34
+- feat: remove .git suffix from repository names and add repo list to hooks by @yammerjp in https://github.com/yammerjp/devslot/pull/36
+- Update documentation to reflect hook optional nature by @yammerjp in https://github.com/yammerjp/devslot/pull/37
+- feat: add detailed help text for all commands by @yammerjp in https://github.com/yammerjp/devslot/pull/38
+- docs: simplify README for OSS project by @yammerjp in https://github.com/yammerjp/devslot/pull/39
+- docs: add logo to README by @yammerjp in https://github.com/yammerjp/devslot/pull/40
+
 ## [v0.2.5](https://github.com/yammerjp/devslot/compare/v0.2.4...v0.2.5) - 2025-07-06
 - Implement automatic branch creation and fix environment variables by @yammerjp in https://github.com/yammerjp/devslot/pull/29
 
