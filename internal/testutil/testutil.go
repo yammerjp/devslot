@@ -188,8 +188,11 @@ func InitBareRepo(t *testing.T, dir string) {
 		// Try with main branch if master fails
 		cmd = exec.Command("git", "branch", "-M", "main")
 		cmd.Dir = tempDir
-		cmd.Run()
-		
+		if err := cmd.Run(); err != nil {
+			// Log warning but don't fail, as this is a fallback operation
+			t.Logf("Warning: failed to rename branch to main: %v", err)
+		}
+
 		cmd = exec.Command("git", "push", dir, "main")
 		cmd.Dir = tempDir
 		if output2, err2 := cmd.CombinedOutput(); err2 != nil {

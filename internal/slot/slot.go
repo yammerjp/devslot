@@ -175,7 +175,7 @@ func (m *Manager) Reload(name string, cfg *config.Config) error {
 			if err != nil {
 				return fmt.Errorf("failed to determine default branch for %s: %w", repo.Name, err)
 			}
-			
+
 			// Create missing worktree
 			if err := git.CreateWorktree(bareRepoPath, worktreePath, branch); err != nil {
 				return fmt.Errorf("failed to create worktree for %s: %w", repo.Name, err)

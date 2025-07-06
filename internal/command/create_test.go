@@ -16,12 +16,12 @@ func TestCreateCmd_Run(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		slotName    string
-		branch      string
-		setupFunc   func(t *testing.T, projectRoot string) error
-		wantErr     bool
-		errContains string
+		name         string
+		slotName     string
+		branch       string
+		setupFunc    func(t *testing.T, projectRoot string) error
+		wantErr      bool
+		errContains  string
 		validateFunc func(t *testing.T, projectRoot string)
 	}{
 		{
@@ -149,7 +149,7 @@ repositories: []
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			projectRoot := testutil.TempDir(t)
-			
+
 			// Change to project directory
 			defer testutil.Chdir(t, projectRoot)()
 
@@ -183,4 +183,3 @@ repositories: []
 		})
 	}
 }
-
