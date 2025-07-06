@@ -14,6 +14,13 @@ type DestroyCmd struct {
 	SlotName string `arg:"" help:"Name of the slot to destroy"`
 }
 
+func (c *DestroyCmd) Help() string {
+	return `Removes a slot and all its worktrees.
+
+Runs pre-destroy hook if it exists. If the hook fails (non-zero exit),
+the destruction is aborted and the slot remains intact.`
+}
+
 func (c *DestroyCmd) Run(ctx *Context) error {
 	// Find project root
 	currentDir, err := os.Getwd()

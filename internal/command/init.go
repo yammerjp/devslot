@@ -18,6 +18,18 @@ type InitCmd struct {
 	AllowDelete bool `help:"Delete repositories no longer listed in devslot.yaml"`
 }
 
+func (c *InitCmd) Help() string {
+	return `Clones repositories defined in devslot.yaml as bare repositories into repos/.
+
+This command:
+  - Only clones missing repositories (skips existing ones)
+  - Does not affect existing slots or worktrees
+  - Preserves unlisted repositories unless --allow-delete is used
+  - Runs post-init hook if it exists
+
+Safe to run multiple times.`
+}
+
 func (c *InitCmd) Run(ctx *Context) error {
 	// Find project root
 	currentDir, err := os.Getwd()

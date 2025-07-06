@@ -14,6 +14,13 @@ type ReloadCmd struct {
 	SlotName string `arg:"" help:"Name of the slot to reload"`
 }
 
+func (c *ReloadCmd) Help() string {
+	return `Ensures all repositories are checked out as worktrees for the slot.
+
+Automatically creates any missing worktrees (useful after adding new
+repositories to devslot.yaml). Runs post-reload hook if it exists.`
+}
+
 func (c *ReloadCmd) Run(ctx *Context) error {
 	// Find project root
 	currentDir, err := os.Getwd()
