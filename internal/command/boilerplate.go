@@ -10,6 +10,24 @@ type BoilerplateCmd struct {
 	Dir string `arg:"" required:"" help:"Directory to create project structure in (use . for current directory)"`
 }
 
+func (c *BoilerplateCmd) Help() string {
+	return `Creates initial project structure for devslot.
+
+Creates the following:
+  - devslot.yaml    (project configuration template)
+  - .gitignore      (ignores repos/ and slots/)
+  - hooks/          (optional lifecycle scripts)
+    - post-init     (runs after 'devslot init')
+    - post-create   (runs after 'devslot create')
+    - pre-destroy   (runs before 'devslot destroy')
+    - post-reload   (runs after 'devslot reload')
+  - repos/          (for bare repositories)
+  - slots/          (for worktrees)
+
+Creates the target directory if it doesn't exist.
+All hooks are optional and include helpful examples.`
+}
+
 func (c *BoilerplateCmd) Run(ctx *Context) error {
 	// Resolve target directory
 	targetDir := c.Dir

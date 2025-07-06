@@ -13,7 +13,23 @@ import (
 
 type CreateCmd struct {
 	SlotName string `arg:"" help:"Name of the slot to create"`
-	Branch   string `short:"b" help:"Branch to checkout (if not specified, creates new branch with automatic naming)"`
+	Branch   string `short:"b" help:"Branch to checkout (if not specified, creates new branch named devslot/<git-email-localpart>/<slot-name>)"`
+}
+
+func (c *CreateCmd) Help() string {
+	return `Creates a new slot with git worktrees for all repositories.
+
+When -b/--branch is not specified, a new branch is created with the naming pattern:
+  devslot/<prefix>/<slot-name>
+
+The <prefix> is determined by (in order of precedence):
+  1. DEVSLOT_BRANCH_PREFIX environment variable
+  2. git config devslot.branchPrefix
+  3. Local part of git user.email (e.g., "john.doe" from "john.doe@example.com")
+  4. "user" (fallback)
+
+Example: For user "john.doe@example.com" creating slot "feature-x":
+  Branch name: devslot/john-doe/feature-x`
 }
 
 func (c *CreateCmd) Run(ctx *Context) error {
