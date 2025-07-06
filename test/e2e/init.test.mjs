@@ -116,7 +116,7 @@ repositories:
     return
   }
   
-  if (!result.stdout.includes('Cloning') || !result.stdout.includes('Init completed successfully')) {
+  if (!result.stdout.includes('Cloning') || !result.stdout.includes('Initialization complete!')) {
     fail('Output missing expected messages')
     return
   }
