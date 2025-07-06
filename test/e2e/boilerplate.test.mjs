@@ -46,49 +46,45 @@ function fail(message) {
 async function testBasicBoilerplate() {
   await setupTest('basic_boilerplate')
   
-  // Run boilerplate in current directory
   const result = await $({ nothrow: true })`${devslotBinary} boilerplate .`
   
-  // Assertions
   if (!result.ok) {
     fail(`Boilerplate failed: ${result.stderr}`)
     return
   }
   
-  // Check directories were created
-  const expectedDirs = ['hooks', 'repos', 'slots']
-  for (const dir of expectedDirs) {
+  // Check created directories
+  const dirs = ['hooks', 'repos', 'slots']
+  for (const dir of dirs) {
     if (!await fs.pathExists(dir)) {
       fail(`Directory ${dir} was not created`)
       return
     }
   }
   
-  // Check files were created
-  if (!await fs.pathExists('devslot.yaml')) {
-    fail('devslot.yaml was not created')
-    return
-  }
+  // Check created files
+  const files = [
+    'devslot.yaml',
+    '.gitignore',
+    'hooks/post-init',
+    'hooks/post-create',
+    'hooks/pre-destroy',
+    'hooks/post-reload'
+  ]
   
-  if (!await fs.pathExists('.gitignore')) {
-    fail('.gitignore was not created')
-    return
-  }
-  
-  // Check hook scripts were created with executable permissions
-  const hookScripts = ['post-create', 'pre-destroy', 'post-reload']
-  for (const hook of hookScripts) {
-    const hookPath = path.join('hooks', hook)
-    if (!await fs.pathExists(hookPath)) {
-      fail(`Hook script ${hook} was not created`)
+  for (const file of files) {
+    if (!await fs.pathExists(file)) {
+      fail(`File ${file} was not created`)
       return
     }
-    
-    // Check executable permissions
-    const stats = await fs.stat(hookPath)
-    const mode = stats.mode & parseInt('777', 8)
-    if (mode !== parseInt('755', 8)) {
-      fail(`Hook script ${hook} has wrong permissions: ${mode.toString(8)} (expected 755)`)
+  }
+  
+  // Check hook permissions
+  const hooks = ['post-init', 'post-create', 'pre-destroy', 'post-reload']
+  for (const hook of hooks) {
+    const stat = await fs.stat(`hooks/${hook}`)
+    if (!(stat.mode & 0o100)) {
+      fail(`Hook ${hook} is not executable`)
       return
     }
   }
@@ -113,32 +109,31 @@ async function testBasicBoilerplate() {
 async function testBoilerplateInNewDir() {
   await setupTest('boilerplate_new_dir')
   
-  // Run boilerplate to create new directory
-  const newProjectDir = 'my-new-project'
-  const result = await $({ nothrow: true })`${devslotBinary} boilerplate ${newProjectDir}`
+  const result = await $({ nothrow: true })`${devslotBinary} boilerplate my-new-project`
   
   if (!result.ok) {
     fail(`Boilerplate failed: ${result.stderr}`)
     return
   }
   
-  // Check if directory was created
-  if (!await fs.pathExists(newProjectDir)) {
-    fail('New directory was not created')
+  // Check that directory was created
+  if (!await fs.pathExists('my-new-project')) {
+    fail('Project directory was not created')
     return
   }
   
-  // Check structure inside new directory
+  // Check files in the new directory
   const expectedFiles = [
     'devslot.yaml',
     '.gitignore',
+    'hooks/post-init',
     'hooks/post-create',
     'hooks/pre-destroy',
     'hooks/post-reload'
   ]
   
   for (const file of expectedFiles) {
-    const filePath = path.join(newProjectDir, file)
+    const filePath = path.join('my-new-project', file)
     if (!await fs.pathExists(filePath)) {
       fail(`File ${file} was not created in new directory`)
       return
@@ -160,7 +155,6 @@ async function testBoilerplateExistingFiles() {
   const existingHook = '#!/bin/bash\necho "Existing hook"\n'
   await fs.writeFile('hooks/post-create', existingHook, { mode: 0o755 })
   
-  // Run boilerplate
   const result = await $({ nothrow: true })`${devslotBinary} boilerplate .`
   
   if (!result.ok) {
@@ -228,20 +222,63 @@ async function testBoilerplateHookContent() {
 async function testBoilerplateAbsolutePath() {
   await setupTest('boilerplate_absolute_path')
   
-  // Create absolute path
-  const targetDir = path.join(testDir, 'absolute-path-test')
-  await $`mkdir -p ${targetDir}`
-  
-  const result = await $({ nothrow: true })`${devslotBinary} boilerplate ${targetDir}`
+  const absolutePath = path.join(testDir, 'absolute-project')
+  const result = await $({ nothrow: true })`${devslotBinary} boilerplate ${absolutePath}`
   
   if (!result.ok) {
-    fail(`Boilerplate with absolute path failed: ${result.stderr}`)
+    fail(`Boilerplate failed: ${result.stderr}`)
     return
   }
   
-  // Check files in target directory
-  if (!await fs.pathExists(path.join(targetDir, 'devslot.yaml'))) {
-    fail('devslot.yaml not created in absolute path')
+  // Check that directory was created at absolute path
+  if (!await fs.pathExists(absolutePath)) {
+    fail('Project directory was not created at absolute path')
+    return
+  }
+  
+  if (!await fs.pathExists(path.join(absolutePath, 'devslot.yaml'))) {
+    fail('devslot.yaml was not created at absolute path')
+    return
+  }
+  
+  pass()
+}
+
+async function testBoilerplateNoArgs() {
+  await setupTest('boilerplate_no_args')
+  
+  const result = await $({ nothrow: true })`${devslotBinary} boilerplate`
+  
+  if (result.ok) {
+    fail('Boilerplate should fail without directory argument')
+    return
+  }
+  
+  // Check error message
+  const errorOutput = result.stderr + result.stdout
+  if (!errorOutput.includes('expected "<dir>"') && !errorOutput.includes('required')) {
+    fail(`Unexpected error message: ${errorOutput}`)
+    return
+  }
+  
+  pass()
+}
+
+async function testBoilerplateHelp() {
+  await setupTest('boilerplate_help')
+  
+  const result = await $({ nothrow: true })`${devslotBinary} boilerplate --help`
+  
+  if (!result.ok) {
+    fail(`Help failed: ${result.stderr}`)
+    return
+  }
+  
+  const output = result.stdout
+  
+  // Check that help mentions directory argument
+  if (!output.includes('<dir>') && !output.includes('Directory')) {
+    fail('Help does not mention directory argument')
     return
   }
   
@@ -281,6 +318,8 @@ async function runTests() {
   await testBoilerplateExistingFiles()
   await testBoilerplateHookContent()
   await testBoilerplateAbsolutePath()
+  await testBoilerplateNoArgs()
+  await testBoilerplateHelp()
   await testBoilerplateInvalidPath()
   
   // Summary

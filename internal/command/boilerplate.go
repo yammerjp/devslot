@@ -175,7 +175,7 @@ Thumbs.db
 	ctx.Println("1. Edit devslot.yaml to add your repositories")
 	ctx.Println("2. Run 'devslot init' to clone the repositories")
 	ctx.Println("3. Create your first slot with 'devslot create <slot-name>'")
-	ctx.LogInfo("boilerplate created")
+	ctx.LogInfo("boilerplate created", "directory", targetDir)
 
 	return nil
 }

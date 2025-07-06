@@ -15,11 +15,11 @@ var version = "dev"
 
 type CLI struct {
 	Verbose     bool                   `long:"verbose" help:"Enable verbose logging"`
-	Boilerplate command.BoilerplateCmd `cmd:"" help:"Generate initial project structure in current directory"`
+	Boilerplate command.BoilerplateCmd `cmd:"" help:"Generate initial project structure in the specified directory"`
 	Init        command.InitCmd        `cmd:"" help:"Sync bare repositories defined in devslot.yaml into repos/"`
 	Create      command.CreateCmd      `cmd:"" help:"Create a new slot (multi-repo worktree environment)"`
-	Destroy     command.DestroyCmd     `cmd:"" help:"Remove the specified slot (runs pre-destroy hook first)"`
-	Reload      command.ReloadCmd      `cmd:"" help:"Ensure all worktrees exist for the slot and run post-reload hook"`
+	Destroy     command.DestroyCmd     `cmd:"" help:"Remove the specified slot (runs pre-destroy hook if exists)"`
+	Reload      command.ReloadCmd      `cmd:"" help:"Ensure all worktrees exist for the slot and run post-reload hook if exists"`
 	List        command.ListCmd        `cmd:"" help:"List all existing slots"`
 	Doctor      command.DoctorCmd      `cmd:"" help:"Check consistency of project structure and repositories"`
 	Version     command.VersionCmd     `cmd:"" help:"Show devslot version"`
