@@ -46,7 +46,7 @@ func (c *CreateCmd) Run(ctx *Context) error {
 	// Create slot
 	mgr := slot.NewManager(projectRoot)
 	fmt.Fprintf(ctx.Writer, "Creating slot '%s'...\n", c.SlotName)
-	
+
 	if err := mgr.Create(c.SlotName, cfg); err != nil {
 		return fmt.Errorf("failed to create slot: %w", err)
 	}

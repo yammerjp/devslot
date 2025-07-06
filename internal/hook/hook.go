@@ -31,7 +31,7 @@ func NewRunner(projectRoot string) *Runner {
 // Run executes a hook if it exists
 func (r *Runner) Run(hookType Type, slotName string, env map[string]string) error {
 	hookPath := filepath.Join(r.projectRoot, "hooks", string(hookType))
-	
+
 	// Check if hook exists and is executable
 	info, err := os.Stat(hookPath)
 	if err != nil {
@@ -41,32 +41,32 @@ func (r *Runner) Run(hookType Type, slotName string, env map[string]string) erro
 		}
 		return fmt.Errorf("failed to stat hook %s: %w", hookType, err)
 	}
-	
+
 	// Check if file is executable
 	if info.Mode().Perm()&0111 == 0 {
 		return fmt.Errorf("hook %s is not executable", hookType)
 	}
-	
+
 	// Prepare command
 	cmd := exec.Command(hookPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	
+
 	// Set environment variables
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_SLOT=%s", slotName))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("DEVSLOT_PROJECT_ROOT=%s", r.projectRoot))
-	
+
 	// Add custom environment variables
 	for k, v := range env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
-	
+
 	// Execute hook
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("hook %s failed: %w", hookType, err)
 	}
-	
+
 	return nil
 }
 
@@ -77,7 +77,7 @@ func (r *Runner) Exists(hookType Type) bool {
 	if err != nil {
 		return false
 	}
-	
+
 	// Check if it's a regular file and executable
 	return info.Mode().IsRegular() && info.Mode().Perm()&0111 != 0
 }

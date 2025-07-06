@@ -52,7 +52,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 	// Clone each repository as bare
 	for _, repo := range cfg.Repositories {
 		bareRepoPath := filepath.Join(reposDir, repo.Name)
-		
+
 		// Check if repository already exists
 		if git.IsValidRepository(bareRepoPath) {
 			fmt.Fprintf(ctx.Writer, "Repository %s already exists, skipping...\n", repo.Name)

@@ -40,7 +40,7 @@ func (c *DestroyCmd) Run(ctx *Context) error {
 	// Destroy slot
 	mgr := slot.NewManager(projectRoot)
 	fmt.Fprintf(ctx.Writer, "Destroying slot '%s'...\n", c.SlotName)
-	
+
 	if err := mgr.Destroy(c.SlotName); err != nil {
 		return fmt.Errorf("failed to destroy slot: %w", err)
 	}

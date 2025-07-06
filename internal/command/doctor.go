@@ -87,7 +87,7 @@ func (c *DoctorCmd) Run(ctx *Context) error {
 	}
 
 	// Summary
-	fmt.Fprintln(ctx.Writer, "\n" + strings.Repeat("-", 40))
+	fmt.Fprintln(ctx.Writer, "\n"+strings.Repeat("-", 40))
 	if hasIssues {
 		fmt.Fprintln(ctx.Writer, "❌ Some issues were found. Please fix them before continuing.")
 		return fmt.Errorf("doctor check failed")

@@ -115,7 +115,7 @@ func (m *Manager) Destroy(name string) error {
 // List returns all existing slots
 func (m *Manager) List() ([]string, error) {
 	slotsPath := filepath.Join(m.projectRoot, "slots")
-	
+
 	entries, err := os.ReadDir(slotsPath)
 	if err != nil {
 		if os.IsNotExist(err) {

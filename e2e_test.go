@@ -20,7 +20,7 @@ func TestE2E_FullWorkflow(t *testing.T) {
 	// Build the binary
 	tempDir := t.TempDir()
 	binaryPath := filepath.Join(tempDir, "devslot")
-	
+
 	buildCmd := exec.Command("go", "build", "-o", binaryPath, "./cmd/devslot")
 	if output, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build devslot: %v\nOutput: %s", err, output)
@@ -95,7 +95,7 @@ func TestE2E_FullWorkflow(t *testing.T) {
 		if err == nil {
 			t.Log("doctor command succeeded (no critical issues)")
 		}
-		
+
 		if !strings.Contains(output, "Checking configuration") {
 			t.Errorf("Expected doctor output to contain 'Checking configuration', got: %s", output)
 		}
@@ -107,7 +107,7 @@ func TestE2E_FullWorkflow(t *testing.T) {
 		if err != nil {
 			t.Fatalf("list command failed: %v\nOutput: %s", err, output)
 		}
-		
+
 		if !strings.Contains(output, "No slots found") {
 			t.Errorf("Expected list output to show 'No slots found', got: %s", output)
 		}
@@ -158,7 +158,7 @@ func TestE2E_HelpAndErrors(t *testing.T) {
 	// Build the binary
 	tempDir := t.TempDir()
 	binaryPath := filepath.Join(tempDir, "devslot")
-	
+
 	buildCmd := exec.Command("go", "build", "-o", binaryPath, "./cmd/devslot")
 	if output, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build devslot: %v\nOutput: %s", err, output)
@@ -198,10 +198,10 @@ func TestE2E_HelpAndErrors(t *testing.T) {
 		output, _ := cmd.CombinedOutput()
 		// Kong may not return error for invalid command with our Exit override
 		outputStr := string(output)
-		
+
 		// Check if we got an error message about invalid command
 		if !strings.Contains(outputStr, "error: unexpected argument") &&
-		   !strings.Contains(outputStr, "expected one of") {
+			!strings.Contains(outputStr, "expected one of") {
 			t.Errorf("Expected error message about invalid command, got: %s", outputStr)
 		}
 	})
@@ -214,24 +214,24 @@ func TestE2E_HelpAndErrors(t *testing.T) {
 		}
 
 		commandsThatNeedConfig := []string{"init", "list", "doctor"}
-		
+
 		for _, cmdName := range commandsThatNeedConfig {
 			t.Run(cmdName, func(t *testing.T) {
 				cmd := exec.Command(binaryPath, cmdName)
 				cmd.Dir = emptyDir
 				output, err := cmd.CombinedOutput()
 				outputStr := string(output)
-				
+
 				// Check for error message in output
 				// Kong with Exit override may not return error code
 				hasErrorMessage := strings.Contains(outputStr, "not in a devslot project") ||
-				                  strings.Contains(outputStr, "devslot.yaml not found") ||
-				                  strings.Contains(outputStr, "error:")
-				
+					strings.Contains(outputStr, "devslot.yaml not found") ||
+					strings.Contains(outputStr, "error:")
+
 				if err == nil && !hasErrorMessage {
 					t.Fatalf("Expected %s command to fail without devslot.yaml, got: %s", cmdName, outputStr)
 				}
-				
+
 				if !hasErrorMessage {
 					t.Errorf("Expected error about missing devslot.yaml, got: %s", outputStr)
 				}
@@ -248,7 +248,7 @@ func TestE2E_SlotOperations(t *testing.T) {
 	// This test uses a mock git repository to avoid network dependencies
 	tempDir := t.TempDir()
 	binaryPath := filepath.Join(tempDir, "devslot")
-	
+
 	// Build the binary
 	buildCmd := exec.Command("go", "build", "-o", binaryPath, "./cmd/devslot")
 	if output, err := buildCmd.CombinedOutput(); err != nil {

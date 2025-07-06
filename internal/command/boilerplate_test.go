@@ -12,7 +12,7 @@ import (
 func TestBoilerplateCmd_Run(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir := testutil.TempDir(t)
-	
+
 	// Change to temp directory
 	originalDir, err := os.Getwd()
 	if err != nil {
@@ -95,7 +95,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 func TestBoilerplateCmd_RunTwice(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir := testutil.TempDir(t)
-	
+
 	// Change to temp directory
 	originalDir, err := os.Getwd()
 	if err != nil {
@@ -129,7 +129,7 @@ func TestBoilerplateCmd_RunTwice(t *testing.T) {
 func TestBoilerplateCmd_ExistingGitignore(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir := testutil.TempDir(t)
-	
+
 	// Change to temp directory
 	originalDir, err := os.Getwd()
 	if err != nil {
@@ -161,4 +161,3 @@ func TestBoilerplateCmd_ExistingGitignore(t *testing.T) {
 		t.Error(".gitignore missing devslot directories")
 	}
 }
-

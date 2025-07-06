@@ -46,7 +46,7 @@ func (c *ReloadCmd) Run(ctx *Context) error {
 	// Reload slot
 	mgr := slot.NewManager(projectRoot)
 	fmt.Fprintf(ctx.Writer, "Reloading slot '%s'...\n", c.SlotName)
-	
+
 	if err := mgr.Reload(c.SlotName, cfg); err != nil {
 		return fmt.Errorf("failed to reload slot: %w", err)
 	}
