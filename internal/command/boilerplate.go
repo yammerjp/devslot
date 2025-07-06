@@ -85,6 +85,30 @@ Thumbs.db
 
 	// Create hook scripts with executable permissions
 	hookScripts := map[string]string{
+		"post-init": `#!/bin/bash
+# This hook is called after 'devslot init' clones/updates repositories
+# Environment variables:
+#   DEVSLOT_ROOT: The root directory of the project
+#   DEVSLOT_REPOS_DIR: The full path to the repos directory
+
+# echo "Repositories initialized!"
+
+# Example: Set up git config for all repositories
+# for repo in "$DEVSLOT_REPOS_DIR"/*.git; do
+#     if [ -d "$repo" ]; then
+#         echo "Configuring $(basename "$repo")..."
+#         git -C "$repo" config core.hooksPath "$DEVSLOT_ROOT/hooks/git"
+#     fi
+# done
+
+# Example: Fetch all remote branches
+# for repo in "$DEVSLOT_REPOS_DIR"/*.git; do
+#     if [ -d "$repo" ]; then
+#         echo "Fetching all branches for $(basename "$repo")..."
+#         git -C "$repo" fetch --all
+#     fi
+# done
+`,
 		"post-create": `#!/bin/bash
 # This hook is called after a new slot is created
 # Environment variables:

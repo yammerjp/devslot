@@ -9,6 +9,7 @@ import (
 	"github.com/yammerjp/devslot/internal/config"
 	"github.com/yammerjp/devslot/internal/errors"
 	"github.com/yammerjp/devslot/internal/git"
+	"github.com/yammerjp/devslot/internal/hook"
 	"github.com/yammerjp/devslot/internal/lock"
 )
 
@@ -104,6 +105,14 @@ func (c *InitCmd) Run(ctx *Context) error {
 				}
 			}
 		}
+	}
+
+	// Run post-init hook
+	hookRunner := hook.NewRunner(projectRoot)
+	ctx.LogDebug("running post-init hook")
+	if err := hookRunner.Run(hook.PostInit, "", nil); err != nil {
+		ctx.LogWarn("post-init hook failed", "error", err)
+		return fmt.Errorf("post-init hook failed: %w", err)
 	}
 
 	ctx.Println("\nInitialization complete!")

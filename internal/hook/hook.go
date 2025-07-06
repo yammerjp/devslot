@@ -16,6 +16,7 @@ const (
 	PostCreate Type = "post-create"
 	PreDestroy Type = "pre-destroy"
 	PostReload Type = "post-reload"
+	PostInit   Type = "post-init"
 )
 
 // Runner executes hooks
