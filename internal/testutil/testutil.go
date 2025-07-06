@@ -98,8 +98,9 @@ func CreateProjectStructure(t *testing.T, root string) {
 	}
 	
 	// Create devslot.yaml
-	configContent := `repositories:
-  - name: example-repo
+	configContent := `version: 1
+repositories:
+  - name: example-repo.git
     url: https://github.com/example/repo.git
 `
 	CreateFile(t, filepath.Join(root, "devslot.yaml"), configContent)

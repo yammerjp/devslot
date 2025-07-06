@@ -17,10 +17,11 @@ func TestLoad(t *testing.T) {
 	}{
 		{
 			name: "valid config",
-			yamlContent: `repositories:
-  - name: repo1
+			yamlContent: `version: 1
+repositories:
+  - name: repo1.git
     url: https://github.com/example/repo1.git
-  - name: repo2
+  - name: repo2.git
     url: https://github.com/example/repo2.git
 `,
 			wantErr:   false,
@@ -28,7 +29,8 @@ func TestLoad(t *testing.T) {
 		},
 		{
 			name: "empty config",
-			yamlContent: `repositories: []
+			yamlContent: `version: 1
+repositories: []
 `,
 			wantErr:   false,
 			wantRepos: 0,
@@ -80,7 +82,7 @@ func TestFindProjectRoot(t *testing.T) {
 	}
 
 	// Create devslot.yaml in project root
-	testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), "repositories: []")
+	testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), "version: 1\nrepositories: []")
 
 	tests := []struct {
 		name      string

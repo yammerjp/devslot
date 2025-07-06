@@ -116,8 +116,9 @@ func TestE2E_FullWorkflow(t *testing.T) {
 	// Test 5: Create a test repository config
 	t.Run("setup-test-repo", func(t *testing.T) {
 		// Create a simple devslot.yaml with a test repository
-		yamlContent := `repositories:
-  - name: test-repo
+		yamlContent := `version: 1
+repositories:
+  - name: test-repo.git
     url: https://github.com/octocat/Hello-World.git
 `
 		yamlPath := filepath.Join(projectDir, "devslot.yaml")
@@ -142,9 +143,9 @@ func TestE2E_FullWorkflow(t *testing.T) {
 		}
 
 		// Check if repository was cloned
-		repoPath := filepath.Join(projectDir, "repos", "test-repo")
+		repoPath := filepath.Join(projectDir, "repos", "test-repo.git")
 		if _, err := os.Stat(repoPath); os.IsNotExist(err) {
-			t.Error("Expected test-repo to be cloned")
+			t.Error("Expected test-repo.git to be cloned")
 		}
 	})
 }
@@ -290,8 +291,9 @@ func TestE2E_SlotOperations(t *testing.T) {
 	}
 
 	// Create devslot.yaml
-	yamlContent := `repositories:
-  - name: mock-repo
+	yamlContent := `version: 1
+repositories:
+  - name: mock-repo.git
     url: file://` + mockRepoDir + `
 `
 	if err := os.WriteFile(filepath.Join(projectDir, "devslot.yaml"), []byte(yamlContent), 0644); err != nil {

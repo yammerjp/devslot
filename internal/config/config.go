@@ -29,46 +29,21 @@ func Load(rootPath string) (*Config, error) {
 		return nil, err
 	}
 
-	// Try to parse as new format first
 	var config Config
-	if err := yaml.Unmarshal(data, &config); err == nil && len(config.Repositories) > 0 {
-		// Check if it's actually the new format (has name field)
-		hasNameField := false
-		for _, repo := range config.Repositories {
-			if repo.Name != "" {
-				hasNameField = true
-				break
-			}
-		}
-		if hasNameField {
-			// Default version to 1 if not specified
-			if config.Version == 0 {
-				config.Version = 1
-			}
-			if config.Version != 1 {
-				return nil, fmt.Errorf("unsupported config version: %d", config.Version)
-			}
-			return &config, nil
-		}
-	}
-
-	// Try to parse as legacy format
-	var legacy LegacyConfig
-	if err := yaml.Unmarshal(data, &legacy); err != nil {
+	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
 	// Default version to 1 if not specified
-	if legacy.Version == 0 {
-		legacy.Version = 1
+	if config.Version == 0 {
+		config.Version = 1
 	}
 
-	if legacy.Version != 1 {
-		return nil, fmt.Errorf("unsupported config version: %d", legacy.Version)
+	if config.Version != 1 {
+		return nil, fmt.Errorf("unsupported config version: %d", config.Version)
 	}
 
-	// Convert legacy format to new format
-	return ConvertLegacyConfig(&legacy), nil
+	return &config, nil
 }
 
 // FindProjectRoot searches for the project root containing devslot.yaml

@@ -32,12 +32,13 @@ func (c *BoilerplateCmd) Run(ctx *Context) error {
 	// Create devslot.yaml
 	devslotYamlPath := filepath.Join(currentDir, "devslot.yaml")
 	devslotYamlContent := `# devslot configuration file
+version: 1
 repositories:
   # Add your repositories here
   # Example:
-  # - name: my-app
+  # - name: my-app.git
   #   url: https://github.com/myorg/my-app.git
-  # - name: my-lib
+  # - name: my-lib.git
   #   url: https://github.com/myorg/my-lib.git
 `
 	if err := createFileIfNotExists(devslotYamlPath, devslotYamlContent); err != nil {

@@ -78,6 +78,9 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 
 	// Check devslot.yaml content
 	devslotYaml := testutil.ReadFile(t, filepath.Join(tempDir, "devslot.yaml"))
+	if !contains(devslotYaml, "version: 1") {
+		t.Error("devslot.yaml missing 'version: 1'")
+	}
 	if !contains(devslotYaml, "repositories:") {
 		t.Error("devslot.yaml missing 'repositories:' section")
 	}
