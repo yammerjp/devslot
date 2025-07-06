@@ -6,12 +6,24 @@ import (
 	"path/filepath"
 )
 
-type BoilerplateCmd struct{}
+type BoilerplateCmd struct {
+	Dir string `arg:"" required:"" help:"Directory to create project structure in (use . for current directory)"`
+}
 
 func (c *BoilerplateCmd) Run(ctx *Context) error {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
+	// Resolve target directory
+	targetDir := c.Dir
+	if !filepath.IsAbs(targetDir) {
+		currentDir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+		targetDir = filepath.Join(currentDir, targetDir)
+	}
+
+	// Create target directory if it doesn't exist
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return fmt.Errorf("failed to create target directory: %w", err)
 	}
 
 	// Create directories
@@ -22,7 +34,7 @@ func (c *BoilerplateCmd) Run(ctx *Context) error {
 	}
 
 	for _, dir := range directories {
-		dirPath := filepath.Join(currentDir, dir)
+		dirPath := filepath.Join(targetDir, dir)
 		if err := os.MkdirAll(dirPath, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
@@ -31,7 +43,7 @@ func (c *BoilerplateCmd) Run(ctx *Context) error {
 	}
 
 	// Create devslot.yaml
-	devslotYamlPath := filepath.Join(currentDir, "devslot.yaml")
+	devslotYamlPath := filepath.Join(targetDir, "devslot.yaml")
 	devslotYamlContent := `# devslot configuration file
 version: 1
 repositories:
@@ -49,7 +61,7 @@ repositories:
 	ctx.LogInfo("devslot.yaml created")
 
 	// Create .gitignore
-	gitignorePath := filepath.Join(currentDir, ".gitignore")
+	gitignorePath := filepath.Join(targetDir, ".gitignore")
 	gitignoreContent := `# devslot directories
 /repos/
 /slots/
@@ -158,7 +170,7 @@ Thumbs.db
 	}
 
 	for hookName, content := range hookScripts {
-		hookPath := filepath.Join(currentDir, "hooks", hookName)
+		hookPath := filepath.Join(targetDir, "hooks", hookName)
 		if err := createExecutableFile(hookPath, content); err != nil {
 			return fmt.Errorf("failed to create hook script %s: %w", hookName, err)
 		}
@@ -171,7 +183,7 @@ Thumbs.db
 	ctx.Println("1. Edit devslot.yaml to add your repositories")
 	ctx.Println("2. Run 'devslot init' to clone the repositories")
 	ctx.Println("3. Create your first slot with 'devslot create <slot-name>'")
-	ctx.LogInfo("boilerplate created")
+	ctx.LogInfo("boilerplate created", "directory", targetDir)
 
 	return nil
 }

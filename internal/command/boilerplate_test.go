@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/yammerjp/devslot/internal/testutil"
@@ -16,9 +17,9 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 	// Change to temp directory
 	defer testutil.Chdir(t, tempDir)()
 
-	// Run boilerplate command
+	// Run boilerplate command with current directory
 	var buf bytes.Buffer
-	cmd := &BoilerplateCmd{}
+	cmd := &BoilerplateCmd{Dir: "."}
 	ctx := &Context{Writer: &buf}
 
 	if err := cmd.Run(ctx); err != nil {
@@ -112,7 +113,7 @@ func TestBoilerplateCmd_RunTwice(t *testing.T) {
 	defer testutil.Chdir(t, tempDir)()
 
 	// Run boilerplate command twice
-	cmd := &BoilerplateCmd{}
+	cmd := &BoilerplateCmd{Dir: "."}
 	ctx := &Context{Writer: &bytes.Buffer{}}
 
 	// First run
@@ -143,7 +144,7 @@ func TestBoilerplateCmd_ExistingGitignore(t *testing.T) {
 	testutil.CreateFile(t, filepath.Join(tempDir, ".gitignore"), existingContent)
 
 	// Run boilerplate command
-	cmd := &BoilerplateCmd{}
+	cmd := &BoilerplateCmd{Dir: "."}
 	ctx := &Context{Writer: &bytes.Buffer{}}
 
 	if err := cmd.Run(ctx); err != nil {
@@ -152,10 +153,85 @@ func TestBoilerplateCmd_ExistingGitignore(t *testing.T) {
 
 	// Check that .gitignore was updated
 	gitignore := testutil.ReadFile(t, filepath.Join(tempDir, ".gitignore"))
-	if !contains(gitignore, "node_modules/") {
+	if !strings.Contains(gitignore, "node_modules/") {
 		t.Error(".gitignore missing existing content")
 	}
-	if !contains(gitignore, "/repos/") || !contains(gitignore, "/slots/") {
+	if !strings.Contains(gitignore, "/repos/") || !strings.Contains(gitignore, "/slots/") {
 		t.Error(".gitignore missing devslot directories")
+	}
+}
+
+func TestBoilerplateCmd_WithSubdirectory(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := testutil.TempDir(t)
+
+	// Change to temp directory
+	defer testutil.Chdir(t, tempDir)()
+
+	// Run boilerplate command with subdirectory
+	var buf bytes.Buffer
+	cmd := &BoilerplateCmd{Dir: "my-project"}
+	ctx := &Context{Writer: &buf}
+
+	if err := cmd.Run(ctx); err != nil {
+		t.Fatalf("BoilerplateCmd.Run() error = %v", err)
+	}
+
+	// Check that files were created in subdirectory
+	projectDir := filepath.Join(tempDir, "my-project")
+	
+	// Check directory was created
+	if !testutil.DirExists(t, projectDir) {
+		t.Error("Project directory was not created")
+	}
+
+	// Check all files exist in subdirectory
+	expectedFiles := []string{
+		"devslot.yaml",
+		".gitignore",
+		"hooks/post-create",
+		"hooks/pre-destroy",
+		"hooks/post-reload",
+	}
+
+	for _, file := range expectedFiles {
+		filePath := filepath.Join(projectDir, file)
+		if !testutil.FileExists(t, filePath) {
+			t.Errorf("File %s was not created in subdirectory", file)
+		}
+	}
+
+	// Check directories
+	expectedDirs := []string{"hooks", "repos", "slots"}
+	for _, dir := range expectedDirs {
+		dirPath := filepath.Join(projectDir, dir)
+		if !testutil.DirExists(t, dirPath) {
+			t.Errorf("Directory %s was not created in subdirectory", dir)
+		}
+	}
+}
+
+func TestBoilerplateCmd_WithAbsolutePath(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := testutil.TempDir(t)
+	projectDir := filepath.Join(tempDir, "absolute-project")
+
+	// Run boilerplate command with absolute path
+	var buf bytes.Buffer
+	cmd := &BoilerplateCmd{Dir: projectDir}
+	ctx := &Context{Writer: &buf}
+
+	if err := cmd.Run(ctx); err != nil {
+		t.Fatalf("BoilerplateCmd.Run() error = %v", err)
+	}
+
+	// Check that files were created in absolute path
+	if !testutil.DirExists(t, projectDir) {
+		t.Error("Project directory was not created at absolute path")
+	}
+
+	// Check devslot.yaml exists
+	if !testutil.FileExists(t, filepath.Join(projectDir, "devslot.yaml")) {
+		t.Error("devslot.yaml was not created at absolute path")
 	}
 }
