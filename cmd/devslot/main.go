@@ -9,44 +9,65 @@ import (
 )
 
 type CLI struct {
-	Boilerplate command.BoilerplateCmd `cmd:"" help:"Create boilerplate structure for a new project"`
-	Init        command.InitCmd        `cmd:"" help:"Initialize the project by syncing bare repositories"`
-	Create      command.CreateCmd      `cmd:"" help:"Create a new slot"`
-	Destroy     command.DestroyCmd     `cmd:"" help:"Destroy an existing slot"`
-	Reload      command.ReloadCmd      `cmd:"" help:"Reload a slot to ensure all worktrees exist"`
+	Boilerplate command.BoilerplateCmd `cmd:"" help:"Generate initial project structure in current directory"`
+	Init        command.InitCmd        `cmd:"" help:"Sync bare repositories defined in devslot.yaml into repos/"`
+	Create      command.CreateCmd      `cmd:"" help:"Create a new slot (multi-repo worktree environment)"`
+	Destroy     command.DestroyCmd     `cmd:"" help:"Remove the specified slot (runs pre-destroy hook first)"`
+	Reload      command.ReloadCmd      `cmd:"" help:"Ensure all worktrees exist for the slot and run post-reload hook"`
 	List        command.ListCmd        `cmd:"" help:"List all existing slots"`
-	Doctor      command.DoctorCmd      `cmd:"" help:"Check project consistency and show diagnostics"`
-	Version     command.VersionCmd     `cmd:"" help:"Show version information"`
+	Doctor      command.DoctorCmd      `cmd:"" help:"Check consistency of project structure and repositories"`
+	Version     command.VersionCmd     `cmd:"" help:"Show devslot version"`
+
+	VersionFlag kong.VersionFlag `short:"v" name:"version" help:"Show version"`
 }
 
 type App struct {
-	parser *kong.Kong
-	writer io.Writer
+	parser      *kong.Kong
+	writer      io.Writer
+	exitHandler func(int)
 }
 
 func NewApp(writer io.Writer) *App {
+	app := &App{
+		writer:      writer,
+		exitHandler: os.Exit,
+	}
+
 	cli := &CLI{}
 	parser, err := kong.New(cli,
 		kong.Name("devslot"),
-		kong.Description("A development environment manager for multi-repository worktrees"),
-		kong.UsageOnError(),
+		kong.Description("Development environment manager for multi-repo worktrees"),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,
 		}),
 		kong.Writers(writer, writer),
-		kong.Exit(func(int) {}), // Override exit for testing
+		kong.Exit(func(code int) {
+			app.exitHandler(code)
+		}),
+		kong.Vars{
+			"version": "dev", // This should be set by ldflags during build
+		},
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	return &App{
-		parser: parser,
-		writer: writer,
-	}
+	app.parser = parser
+	return app
+}
+
+// SetExitHandler sets a custom exit handler for testing
+func (app *App) SetExitHandler(handler func(int)) {
+	app.exitHandler = handler
 }
 
 func (app *App) Run(args []string) error {
+	// Show help if no arguments provided
+	if len(args) == 0 {
+		_, err := app.parser.Parse([]string{"--help"})
+		return err
+	}
+
 	ctx, err := app.parser.Parse(args)
 	if err != nil {
 		return err
