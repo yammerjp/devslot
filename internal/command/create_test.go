@@ -3,17 +3,15 @@ package command
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/yammerjp/devslot/internal/testutil"
 )
 
 func TestCreateCmd_Run(t *testing.T) {
-	// Skip if running in CI to avoid network/git operations
-	if os.Getenv("CI") == "true" {
-		t.Skip("Skipping create command tests in CI")
-	}
 
 	tests := []struct {
 		name         string
@@ -31,7 +29,7 @@ func TestCreateCmd_Run(t *testing.T) {
 				// Create devslot.yaml
 				yamlContent := `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: https://github.com/example/repo1.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -42,6 +40,11 @@ repositories:
 					return err
 				}
 				testutil.InitBareRepo(t, repo1Path)
+
+				// Set git config for test
+				cmd := exec.Command("git", "config", "--global", "user.email", "test@example.com")
+				_ = cmd.Run() // Ignore error in test setup
+
 				return nil
 			},
 			wantErr: false,
@@ -52,9 +55,22 @@ repositories:
 				}
 
 				// Check if worktree was created
-				worktreePath := filepath.Join(slotPath, "repo1.git")
+				worktreePath := filepath.Join(slotPath, "repo1")
 				if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
 					t.Error("expected worktree to exist")
+				}
+
+				// Check if we're on the expected branch
+				// The branch should be devslot/test/test-slot
+				cmd := exec.Command("git", "-C", worktreePath, "branch", "--show-current")
+				output, err := cmd.Output()
+				if err != nil {
+					t.Errorf("failed to get current branch: %v", err)
+				}
+				branch := strings.TrimSpace(string(output))
+				// Should be "devslot/test/test-slot" based on git email
+				if !strings.Contains(branch, "test-slot") || !strings.Contains(branch, "devslot/test/") {
+					t.Errorf("expected branch to be 'devslot/test/test-slot', got %q", branch)
 				}
 			},
 		},
@@ -66,7 +82,7 @@ repositories:
 				// Create devslot.yaml
 				yamlContent := `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: https://github.com/example/repo1.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -114,7 +130,7 @@ repositories: []
 				// Create devslot.yaml with non-existent repository
 				yamlContent := `version: 1
 repositories:
-  - name: missing.git
+  - name: missing
     url: https://github.com/example/missing.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -142,7 +158,7 @@ repositories: []
 			slotName:    "test-slot",
 			setupFunc:   func(t *testing.T, projectRoot string) error { return nil },
 			wantErr:     true,
-			errContains: "not in a devslot project",
+			errContains: "devslot.yaml not found",
 		},
 	}
 

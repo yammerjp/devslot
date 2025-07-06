@@ -5,6 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
+
+	"github.com/yammerjp/devslot/internal/errors"
 )
 
 // CloneBare clones a repository as a bare repository
@@ -131,8 +135,148 @@ func GetDefaultBranch(bareRepoPath string) (string, error) {
 	}
 
 	if branch == "" {
-		return "", fmt.Errorf("no branches found in repository")
+		return "", errors.NoBranchesFound()
 	}
 
 	return branch, nil
+}
+
+// Fetch fetches updates from origin
+func Fetch(bareRepoPath string) error {
+	cmd := exec.Command("git", "-C", bareRepoPath, "fetch", "origin", "+refs/heads/*:refs/remotes/origin/*")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// GetBranchPrefix returns the branch prefix for new branches
+func GetBranchPrefix() string {
+	// 1. Environment variable (for temporary override)
+	if prefix := os.Getenv("DEVSLOT_BRANCH_PREFIX"); prefix != "" {
+		return prefix
+	}
+
+	// 2. Git config (persistent setting)
+	if prefix := getGitConfig("devslot.branchPrefix"); prefix != "" {
+		return prefix
+	}
+
+	// 3. Git email local part (default)
+	if localPart := getGitEmailLocalPart(); localPart != "" {
+		return fmt.Sprintf("devslot/%s/", localPart)
+	}
+
+	// 4. Fallback
+	return "devslot/user/"
+}
+
+// getGitConfig reads a git config value
+func getGitConfig(key string) string {
+	cmd := exec.Command("git", "config", "--get", key)
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// getGitEmailLocalPart extracts the local part from git user.email
+func getGitEmailLocalPart() string {
+	email := getGitConfig("user.email")
+	if email == "" {
+		return ""
+	}
+
+	// Extract local part before @
+	parts := strings.Split(email, "@")
+	if len(parts) == 0 {
+		return ""
+	}
+
+	// Sanitize for branch name
+	return SanitizeBranchComponent(parts[0])
+}
+
+// SanitizeBranchComponent ensures the string is safe for git branch names
+func SanitizeBranchComponent(name string) string {
+	// Convert to lowercase
+	name = strings.ToLower(name)
+
+	// Replace unsafe characters with hyphens
+	reg := regexp.MustCompile(`[^a-z0-9\-_]+`)
+	name = reg.ReplaceAllString(name, "-")
+
+	// Replace multiple hyphens with single hyphen
+	reg = regexp.MustCompile(`-+`)
+	name = reg.ReplaceAllString(name, "-")
+
+	// Trim hyphens and underscores from start and end
+	name = strings.Trim(name, "-_")
+
+	// Return "user" if empty
+	if name == "" {
+		return "user"
+	}
+
+	return name
+}
+
+// CreateWorktreeWithFetch creates a new worktree after fetching latest changes
+func CreateWorktreeWithFetch(bareRepoPath, worktreePath, slotName string) error {
+	// Check if remote origin exists
+	checkRemoteCmd := exec.Command("git", "-C", bareRepoPath, "remote", "get-url", "origin")
+	if err := checkRemoteCmd.Run(); err != nil {
+		// No remote origin, create without fetch (for tests)
+		return CreateWorktreeWithoutFetch(bareRepoPath, worktreePath, slotName)
+	}
+
+	// 1. Fetch latest changes
+	if err := Fetch(bareRepoPath); err != nil {
+		return errors.FetchFailed(err)
+	}
+
+	// 2. Get default branch
+	defaultBranch, err := GetDefaultBranch(bareRepoPath)
+	if err != nil {
+		return err
+	}
+
+	// 3. Generate branch name
+	prefix := GetBranchPrefix()
+	branchName := fmt.Sprintf("%s%s", prefix, slotName)
+
+	// 4. Create worktree with new branch from origin/defaultBranch
+	cmd := exec.Command("git", "-C", bareRepoPath,
+		"worktree", "add", "-b", branchName,
+		worktreePath,
+		fmt.Sprintf("origin/%s", defaultBranch))
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+// CreateWorktreeWithoutFetch creates a new worktree without fetching (for local/test repos)
+func CreateWorktreeWithoutFetch(bareRepoPath, worktreePath, slotName string) error {
+	// Get default branch
+	defaultBranch, err := GetDefaultBranch(bareRepoPath)
+	if err != nil {
+		return err
+	}
+
+	// Generate branch name
+	prefix := GetBranchPrefix()
+	branchName := fmt.Sprintf("%s%s", prefix, slotName)
+
+	// Create worktree with new branch from local defaultBranch
+	cmd := exec.Command("git", "-C", bareRepoPath,
+		"worktree", "add", "-b", branchName,
+		worktreePath,
+		defaultBranch)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }

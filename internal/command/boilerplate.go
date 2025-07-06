@@ -47,11 +47,11 @@ func (c *BoilerplateCmd) Run(ctx *Context) error {
 	devslotYamlContent := `# devslot configuration file
 version: 1
 repositories:
-  # Add your repositories here
+  # Add your repositories here (without .git suffix)
   # Example:
-  # - name: my-app.git
+  # - name: my-app
   #   url: https://github.com/myorg/my-app.git
-  # - name: my-lib.git
+  # - name: my-lib
   #   url: https://github.com/myorg/my-lib.git
 `
 	if err := createFileIfNotExists(devslotYamlPath, devslotYamlContent); err != nil {
@@ -85,87 +85,79 @@ Thumbs.db
 
 	// Create hook scripts with executable permissions
 	hookScripts := map[string]string{
+		"post-init": `#!/bin/bash
+# This hook is called after 'devslot init' clones/updates repositories
+# Environment variables:
+#   DEVSLOT_ROOT: The root directory of the project
+#   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
+
+# echo "Repositories initialized: $DEVSLOT_REPOSITORIES"
+
+# Example: Set up git config for all repositories
+# for repo in "$DEVSLOT_REPOS_DIR"/*.git; do
+#     if [ -d "$repo" ]; then
+#         echo "Configuring $(basename "$repo")..."
+#         git -C "$repo" config core.hooksPath "$DEVSLOT_ROOT/hooks/git"
+#     fi
+# done
+
+# Example: Fetch all remote branches
+# for repo in "$DEVSLOT_REPOS_DIR"/*.git; do
+#     if [ -d "$repo" ]; then
+#         echo "Fetching all branches for $(basename "$repo")..."
+#         git -C "$repo" fetch --all
+#     fi
+# done
+`,
 		"post-create": `#!/bin/bash
 # This hook is called after a new slot is created
 # Environment variables:
-#   DEVSLOT_SLOT: The name of the slot
-#   DEVSLOT_PROJECT_ROOT: The root directory of the project
+#   DEVSLOT_ROOT: The root directory of the project
+#   DEVSLOT_SLOT_NAME: The name of the slot
+#   DEVSLOT_SLOT_DIR: The full path to the slot directory
+#   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
 
-# Example output (comment out if not needed)
-# echo "🎉 Post-create hook executed!"
-# echo "Slot: $DEVSLOT_SLOT"
-# echo "Project root: $DEVSLOT_PROJECT_ROOT"
-# echo "Working dir: $(pwd)"
-# echo "Hook executed at: $(date)"
+# echo "Slot $DEVSLOT_SLOT_NAME has been created with repos: $DEVSLOT_REPOSITORIES"
 
 # Example: Install dependencies for each repository
-# for repo in "$DEVSLOT_PROJECT_ROOT/slots/$DEVSLOT_SLOT"/*; do
+# for repo in "$DEVSLOT_SLOT_DIR"/*; do
 #     if [ -f "$repo/package.json" ]; then
 #         echo "Installing npm dependencies in $(basename "$repo")..."
 #         (cd "$repo" && npm install)
 #     fi
 # done
-
-# Example: Set up development environment
-# echo "Setting up development environment for $DEVSLOT_SLOT..."
-# Copy environment files, install tools, etc.
-
-# Example: Send notification
-# echo "Slot $DEVSLOT_SLOT is ready!" | notify-send "DevSlot" || true
 `,
 		"pre-destroy": `#!/bin/bash
 # This hook is called before a slot is destroyed
 # Environment variables:
-#   DEVSLOT_SLOT: The name of the slot
-#   DEVSLOT_PROJECT_ROOT: The root directory of the project
+#   DEVSLOT_ROOT: The root directory of the project
+#   DEVSLOT_SLOT_NAME: The name of the slot
+#   DEVSLOT_SLOT_DIR: The full path to the slot directory
+#   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
 
-# Example output (comment out if not needed)
-# echo "🗑️ Pre-destroy hook executed!"
-# echo "About to destroy slot: $DEVSLOT_SLOT"
-# echo "Project root: $DEVSLOT_PROJECT_ROOT"
-# echo "Working dir: $(pwd)"
-
-# Example: Check for uncommitted changes
-# for repo in "$DEVSLOT_PROJECT_ROOT/slots/$DEVSLOT_SLOT"/*; do
-#     if [ -d "$repo/.git" ]; then
-#         if [ -n "$(cd "$repo" && git status --porcelain)" ]; then
-#             echo "WARNING: Uncommitted changes in $(basename "$repo")"
-#             # Optionally exit with error to prevent destruction
-#             # exit 1
-#         fi
-#     fi
-# done
+# echo "Slot $DEVSLOT_SLOT_NAME will be destroyed (repos: $DEVSLOT_REPOSITORIES)"
 
 # Example: Backup important files
-# backup_dir="$DEVSLOT_PROJECT_ROOT/backups/$DEVSLOT_SLOT-$(date +%Y%m%d-%H%M%S)"
+# backup_dir="$DEVSLOT_ROOT/backups/$DEVSLOT_SLOT_NAME-$(date +%Y%m%d-%H%M%S)"
 # mkdir -p "$backup_dir"
 # echo "Backing up slot to $backup_dir..."
-# cp -r "$DEVSLOT_PROJECT_ROOT/slots/$DEVSLOT_SLOT" "$backup_dir/"
 `,
 		"post-reload": `#!/bin/bash
 # This hook is called after a slot is reloaded
 # Environment variables:
-#   DEVSLOT_SLOT: The name of the slot
-#   DEVSLOT_PROJECT_ROOT: The root directory of the project
+#   DEVSLOT_ROOT: The root directory of the project
+#   DEVSLOT_SLOT_NAME: The name of the slot
+#   DEVSLOT_SLOT_DIR: The full path to the slot directory
+#   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
 
-# Example output (comment out if not needed)
-# echo "🔄 Post-reload hook executed!"
-# echo "Reloaded slot: $DEVSLOT_SLOT"
-# echo "Project root: $DEVSLOT_PROJECT_ROOT"
-# echo "Working dir: $(pwd)"
+# echo "Slot $DEVSLOT_SLOT_NAME has been reloaded (repos: $DEVSLOT_REPOSITORIES)"
 
 # Example: Sync dependencies or update configurations
-# echo "Updating dependencies for $DEVSLOT_SLOT..."
-# for repo in "$DEVSLOT_PROJECT_ROOT/slots/$DEVSLOT_SLOT"/*; do
-#     if [ -f "$repo/package.json" ]; then
-#         echo "Updating npm dependencies in $(basename "$repo")..."
-#         (cd "$repo" && npm install)
-#     fi
-# done
-
-# Example: Run migrations or update database schema
-# echo "Running database migrations..."
-# (cd "$DEVSLOT_PROJECT_ROOT/slots/$DEVSLOT_SLOT/main-app" && npm run migrate)
+# echo "Updating dependencies..."
 `,
 	}
 

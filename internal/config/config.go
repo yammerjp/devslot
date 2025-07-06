@@ -1,12 +1,11 @@
 package config
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/goccy/go-yaml"
+	"github.com/yammerjp/devslot/internal/errors"
 )
 
 // Config represents the devslot.yaml configuration
@@ -21,6 +20,11 @@ type Repository struct {
 	URL  string `yaml:"url"`
 }
 
+// BareRepoName returns the name for the bare repository directory (with .git suffix)
+func (r Repository) BareRepoName() string {
+	return r.Name + ".git"
+}
+
 // Load reads and parses the devslot.yaml configuration file
 func Load(rootPath string) (*Config, error) {
 	configPath := filepath.Join(rootPath, "devslot.yaml")
@@ -31,7 +35,7 @@ func Load(rootPath string) (*Config, error) {
 
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse YAML: %w", err)
+		return nil, errors.YAMLParseFailed(err)
 	}
 
 	// Default version to 1 if not specified
@@ -40,7 +44,7 @@ func Load(rootPath string) (*Config, error) {
 	}
 
 	if config.Version != 1 {
-		return nil, fmt.Errorf("unsupported config version: %d", config.Version)
+		return nil, errors.UnsupportedVersion(config.Version)
 	}
 
 	return &config, nil
@@ -57,7 +61,7 @@ func FindProjectRoot(startPath string) (string, error) {
 
 		parent := filepath.Dir(currentPath)
 		if parent == currentPath {
-			return "", errors.New("devslot.yaml not found in any parent directory")
+			return "", errors.ConfigNotFound()
 		}
 		currentPath = parent
 	}

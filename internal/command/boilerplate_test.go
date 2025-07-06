@@ -34,6 +34,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 		"Created directory: slots",
 		"Created file: devslot.yaml",
 		"Updated file: .gitignore",
+		"Created hook script: hooks/post-init",
 		"Created hook script: hooks/post-create",
 		"Created hook script: hooks/pre-destroy",
 		"Created hook script: hooks/post-reload",
@@ -59,6 +60,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 	files := []string{
 		"devslot.yaml",
 		".gitignore",
+		"hooks/post-init",
 		"hooks/post-create",
 		"hooks/pre-destroy",
 		"hooks/post-reload",
@@ -87,6 +89,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 
 	// Check hook files are executable
 	hookFiles := []string{
+		"hooks/post-init",
 		"hooks/post-create",
 		"hooks/pre-destroy",
 		"hooks/post-reload",

@@ -1,13 +1,14 @@
 package slot
 
 import (
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/yammerjp/devslot/internal/config"
+	"github.com/yammerjp/devslot/internal/errors"
 	"github.com/yammerjp/devslot/internal/git"
 	"github.com/yammerjp/devslot/internal/hook"
 )
@@ -39,7 +40,7 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 
 	slotPath := m.getSlotPath(name)
 	if _, err := os.Stat(slotPath); err == nil {
-		return fmt.Errorf("slot %s already exists", name)
+		return errors.SlotAlreadyExists(name)
 	}
 
 	// Create slot directory
@@ -49,7 +50,7 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 
 	// Create worktrees for each repository
 	for _, repo := range cfg.Repositories {
-		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.Name)
+		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.BareRepoName())
 		worktreePath := filepath.Join(slotPath, repo.Name)
 
 		// Ensure bare repository exists
@@ -59,31 +60,38 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 			return fmt.Errorf("bare repository %s does not exist (run 'devslot init' first)", repo.Name)
 		}
 
-		// Determine which branch to use
-		branch := opts.Branch
-		if branch == "" {
-			// Get default branch
-			defaultBranch, err := git.GetDefaultBranch(bareRepoPath)
-			if err != nil {
+		// Create worktree
+		if opts.Branch != "" {
+			// Use specified branch
+			if err := git.CreateWorktree(bareRepoPath, worktreePath, opts.Branch); err != nil {
 				// Cleanup on failure
 				os.RemoveAll(slotPath)
-				return fmt.Errorf("failed to determine default branch for %s: %w", repo.Name, err)
+				return errors.WorktreeFailed(repo.Name, err)
 			}
-			branch = defaultBranch
-		}
-
-		// Create worktree
-		if err := git.CreateWorktree(bareRepoPath, worktreePath, branch); err != nil {
-			// Cleanup on failure
-			os.RemoveAll(slotPath)
-			return fmt.Errorf("failed to create worktree for %s on branch %s: %w", repo.Name, branch, err)
+		} else {
+			// Create new branch with fetch
+			if err := git.CreateWorktreeWithFetch(bareRepoPath, worktreePath, name); err != nil {
+				// Cleanup on failure
+				os.RemoveAll(slotPath)
+				return errors.WorktreeFailed(repo.Name, err)
+			}
 		}
 	}
 
 	// Run post-create hook
-	if err := m.hookRunner.Run(hook.PostCreate, name, nil); err != nil {
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := m.hookRunner.Run(hook.PostCreate, name, hookEnv); err != nil {
 		// Cleanup on hook failure
-		if destroyErr := m.Destroy(name); destroyErr != nil {
+		if destroyErr := m.Destroy(name, cfg); destroyErr != nil {
 			return fmt.Errorf("post-create hook failed: %w (cleanup also failed: %v)", err, destroyErr)
 		}
 		return fmt.Errorf("post-create hook failed: %w", err)
@@ -93,14 +101,24 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 }
 
 // Destroy removes a slot
-func (m *Manager) Destroy(name string) error {
+func (m *Manager) Destroy(name string, cfg *config.Config) error {
 	slotPath := m.getSlotPath(name)
 	if _, err := os.Stat(slotPath); os.IsNotExist(err) {
-		return fmt.Errorf("slot %s does not exist", name)
+		return errors.SlotNotFound(name)
 	}
 
 	// Run pre-destroy hook
-	if err := m.hookRunner.Run(hook.PreDestroy, name, nil); err != nil {
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := m.hookRunner.Run(hook.PreDestroy, name, hookEnv); err != nil {
 		return fmt.Errorf("pre-destroy hook failed: %w", err)
 	}
 
@@ -115,7 +133,13 @@ func (m *Manager) Destroy(name string) error {
 			continue
 		}
 
-		bareRepoPath := filepath.Join(m.projectRoot, "repos", entry.Name())
+		// Try both with and without .git suffix for backward compatibility
+		bareRepoPath := filepath.Join(m.projectRoot, "repos", entry.Name()+".git")
+		if !git.IsValidRepository(bareRepoPath) {
+			// Fallback to old naming convention
+			bareRepoPath = filepath.Join(m.projectRoot, "repos", entry.Name())
+		}
+
 		worktreePath := filepath.Join(slotPath, entry.Name())
 
 		if git.IsValidRepository(bareRepoPath) {
@@ -160,12 +184,12 @@ func (m *Manager) List() ([]string, error) {
 func (m *Manager) Reload(name string, cfg *config.Config) error {
 	slotPath := m.getSlotPath(name)
 	if _, err := os.Stat(slotPath); os.IsNotExist(err) {
-		return fmt.Errorf("slot %s does not exist", name)
+		return errors.SlotNotFound(name)
 	}
 
 	// Check each repository
 	for _, repo := range cfg.Repositories {
-		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.Name)
+		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.BareRepoName())
 		worktreePath := filepath.Join(slotPath, repo.Name)
 
 		// Check if worktree exists
@@ -184,7 +208,17 @@ func (m *Manager) Reload(name string, cfg *config.Config) error {
 	}
 
 	// Run post-reload hook
-	if err := m.hookRunner.Run(hook.PostReload, name, nil); err != nil {
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := m.hookRunner.Run(hook.PostReload, name, hookEnv); err != nil {
 		return fmt.Errorf("post-reload hook failed: %w", err)
 	}
 
@@ -199,15 +233,15 @@ func (m *Manager) getSlotPath(name string) string {
 // validateSlotName validates the slot name
 func (m *Manager) validateSlotName(name string) error {
 	if name == "" {
-		return errors.New("slot name cannot be empty")
+		return stderrors.New("slot name cannot be empty")
 	}
 
 	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
-		return errors.New("slot name cannot contain path separators")
+		return stderrors.New("slot name cannot contain path separators")
 	}
 
 	if name == "." || name == ".." {
-		return errors.New("invalid slot name")
+		return stderrors.New("invalid slot name")
 	}
 
 	return nil

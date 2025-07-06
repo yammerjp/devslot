@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 
 	"github.com/yammerjp/devslot/internal/config"
+	"github.com/yammerjp/devslot/internal/errors"
 	"github.com/yammerjp/devslot/internal/lock"
 	"github.com/yammerjp/devslot/internal/slot"
 )
 
 type CreateCmd struct {
 	SlotName string `arg:"" help:"Name of the slot to create"`
-	Branch   string `short:"b" help:"Branch to checkout in the worktrees (default: repository default branch)"`
+	Branch   string `short:"b" help:"Branch to checkout (if not specified, creates new branch with automatic naming)"`
 }
 
 func (c *CreateCmd) Run(ctx *Context) error {
@@ -24,13 +25,13 @@ func (c *CreateCmd) Run(ctx *Context) error {
 
 	projectRoot, err := config.FindProjectRoot(currentDir)
 	if err != nil {
-		return fmt.Errorf("not in a devslot project: %w", err)
+		return err // config.FindProjectRoot already returns a user-friendly error
 	}
 
 	// Acquire lock
 	lockFile := lock.New(filepath.Join(projectRoot, ".devslot.lock"))
 	if err := lockFile.Acquire(); err != nil {
-		return fmt.Errorf("failed to acquire lock: %w", err)
+		return errors.LockFailed(err)
 	}
 	defer func() {
 		if err := lockFile.Release(); err != nil {

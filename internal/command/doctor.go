@@ -65,7 +65,7 @@ func (c *DoctorCmd) Run(ctx *Context) error {
 	if cfg != nil {
 		ctx.Println("\nChecking repositories...")
 		for _, repo := range cfg.Repositories {
-			bareRepoPath := filepath.Join(projectRoot, "repos", repo.Name)
+			bareRepoPath := filepath.Join(projectRoot, "repos", repo.BareRepoName())
 			if git.IsValidRepository(bareRepoPath) {
 				ctx.Printf("  ✅ Repository %s is cloned\n", repo.Name)
 			} else {
@@ -78,7 +78,7 @@ func (c *DoctorCmd) Run(ctx *Context) error {
 
 	// Check hooks
 	ctx.Println("\nChecking hooks...")
-	hooks := []string{"post-create", "pre-destroy", "post-reload"}
+	hooks := []string{"post-init", "post-create", "pre-destroy", "post-reload"}
 	for _, hookName := range hooks {
 		hookPath := filepath.Join(projectRoot, "hooks", hookName)
 		if info, err := os.Stat(hookPath); err == nil {

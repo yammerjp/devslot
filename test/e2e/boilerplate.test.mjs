@@ -66,6 +66,7 @@ async function testBasicBoilerplate() {
   const files = [
     'devslot.yaml',
     '.gitignore',
+    'hooks/post-init',
     'hooks/post-create',
     'hooks/pre-destroy',
     'hooks/post-reload'
@@ -79,7 +80,7 @@ async function testBasicBoilerplate() {
   }
   
   // Check hook permissions
-  const hooks = ['post-create', 'pre-destroy', 'post-reload']
+  const hooks = ['post-init', 'post-create', 'pre-destroy', 'post-reload']
   for (const hook of hooks) {
     const stat = await fs.stat(`hooks/${hook}`)
     if (!(stat.mode & 0o100)) {
@@ -95,10 +96,17 @@ async function testBasicBoilerplate() {
     return
   }
   
+  // Check .gitignore content
+  const gitignoreContent = await fs.readFile('.gitignore', 'utf-8')
+  if (!gitignoreContent.includes('/repos/') || !gitignoreContent.includes('/slots/')) {
+    fail('.gitignore missing devslot directories')
+    return
+  }
+  
   pass()
 }
 
-async function testBoilerplateNewDir() {
+async function testBoilerplateInNewDir() {
   await setupTest('boilerplate_new_dir')
   
   const result = await $({ nothrow: true })`${devslotBinary} boilerplate my-new-project`
@@ -115,14 +123,21 @@ async function testBoilerplateNewDir() {
   }
   
   // Check files in the new directory
-  if (!await fs.pathExists('my-new-project/devslot.yaml')) {
-    fail('devslot.yaml was not created in new directory')
-    return
-  }
+  const expectedFiles = [
+    'devslot.yaml',
+    '.gitignore',
+    'hooks/post-init',
+    'hooks/post-create',
+    'hooks/pre-destroy',
+    'hooks/post-reload'
+  ]
   
-  if (!await fs.pathExists('my-new-project/hooks/post-create')) {
-    fail('Hooks were not created in new directory')
-    return
+  for (const file of expectedFiles) {
+    const filePath = path.join('my-new-project', file)
+    if (!await fs.pathExists(filePath)) {
+      fail(`File ${file} was not created in new directory`)
+      return
+    }
   }
   
   pass()
@@ -131,8 +146,14 @@ async function testBoilerplateNewDir() {
 async function testBoilerplateExistingFiles() {
   await setupTest('boilerplate_existing_files')
   
-  // Create existing .gitignore
-  await fs.writeFile('.gitignore', 'node_modules/\n*.log\n')
+  // Create existing .gitignore with custom content
+  const existingGitignore = 'node_modules/\n*.log\ncustom-ignore/\n'
+  await fs.writeFile('.gitignore', existingGitignore)
+  
+  // Create existing hook script
+  await $`mkdir -p hooks`
+  const existingHook = '#!/bin/bash\necho "Existing hook"\n'
+  await fs.writeFile('hooks/post-create', existingHook, { mode: 0o755 })
   
   const result = await $({ nothrow: true })`${devslotBinary} boilerplate .`
   
@@ -141,15 +162,57 @@ async function testBoilerplateExistingFiles() {
     return
   }
   
-  // Check that .gitignore was updated
-  const gitignore = await fs.readFile('.gitignore', 'utf-8')
-  if (!gitignore.includes('node_modules/')) {
+  // Check .gitignore was updated (not replaced)
+  const gitignoreContent = await fs.readFile('.gitignore', 'utf-8')
+  if (!gitignoreContent.includes('node_modules/')) {
     fail('.gitignore lost existing content')
     return
   }
+  if (!gitignoreContent.includes('/repos/') || !gitignoreContent.includes('/slots/')) {
+    fail('.gitignore missing devslot directories')
+    return
+  }
   
-  if (!gitignore.includes('/repos/')) {
-    fail('.gitignore missing devslot entries')
+  // Check existing hook was preserved
+  const hookContent = await fs.readFile('hooks/post-create', 'utf-8')
+  if (hookContent !== existingHook) {
+    fail('Existing hook was overwritten')
+    return
+  }
+  
+  pass()
+}
+
+async function testBoilerplateHookContent() {
+  await setupTest('boilerplate_hook_content')
+  
+  const result = await $({ nothrow: true })`${devslotBinary} boilerplate .`
+  
+  if (!result.ok) {
+    fail(`Boilerplate failed: ${result.stderr}`)
+    return
+  }
+  
+  // Check hook content includes proper environment variables
+  const postCreateContent = await fs.readFile('hooks/post-create', 'utf-8')
+  const expectedVars = ['DEVSLOT_ROOT', 'DEVSLOT_SLOT_NAME', 'DEVSLOT_SLOT_DIR', 'DEVSLOT_REPOS_DIR']
+  
+  for (const envVar of expectedVars) {
+    if (!postCreateContent.includes(envVar)) {
+      fail(`post-create hook missing ${envVar} environment variable`)
+      return
+    }
+  }
+  
+  // Check shebang
+  if (!postCreateContent.startsWith('#!/bin/bash')) {
+    fail('Hook script missing proper shebang')
+    return
+  }
+  
+  // Check for example code (should be commented out)
+  if (!postCreateContent.includes('# echo')) {
+    fail('Hook script missing example code')
     return
   }
   
@@ -222,6 +285,22 @@ async function testBoilerplateHelp() {
   pass()
 }
 
+async function testBoilerplateInvalidPath() {
+  await setupTest('boilerplate_invalid_path')
+  
+  // Try to create in a file (not directory)
+  await fs.writeFile('notadir', 'content')
+  
+  const result = await $({ nothrow: true })`${devslotBinary} boilerplate notadir/subdir`
+  
+  if (result.ok) {
+    fail('Boilerplate should fail with invalid path')
+    return
+  }
+  
+  pass()
+}
+
 // Main test runner
 async function runTests() {
   echo('Running devslot boilerplate E2E tests...')
@@ -235,11 +314,13 @@ async function runTests() {
   
   // Run all tests
   await testBasicBoilerplate()
-  await testBoilerplateNewDir()
+  await testBoilerplateInNewDir()
   await testBoilerplateExistingFiles()
+  await testBoilerplateHookContent()
   await testBoilerplateAbsolutePath()
   await testBoilerplateNoArgs()
   await testBoilerplateHelp()
+  await testBoilerplateInvalidPath()
   
   // Summary
   echo('\n================================')

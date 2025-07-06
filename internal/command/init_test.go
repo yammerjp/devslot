@@ -37,7 +37,7 @@ func TestInitCmd_Run(t *testing.T) {
 				// Don't create devslot.yaml
 			},
 			wantErr:     true,
-			errContains: "not in a devslot project",
+			errContains: "devslot.yaml not found",
 		},
 		{
 			name: "empty repository list",
@@ -84,7 +84,7 @@ repositories: []
 
 				yamlContent := `version: 1
 repositories:
-  - name: local-repo.git
+  - name: local-repo
     url: ` + localRepoPath + `
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -105,12 +105,61 @@ repositories:
 			},
 		},
 		{
+			name: "post-init hook is executed",
+			setupFunc: func(t *testing.T, projectRoot string) {
+				yamlContent := `version: 1
+repositories: []
+`
+				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
+
+				// Create post-init hook
+				hooksDir := filepath.Join(projectRoot, "hooks")
+				if err := os.MkdirAll(hooksDir, 0755); err != nil {
+					t.Fatalf("failed to create hooks directory: %v", err)
+				}
+
+				hookScript := `#!/bin/bash
+echo "POST-INIT-HOOK-EXECUTED" > "$DEVSLOT_ROOT/post-init-marker"
+echo "$DEVSLOT_REPOSITORIES" > "$DEVSLOT_ROOT/post-init-repos"
+`
+				hookPath := filepath.Join(hooksDir, "post-init")
+				if err := os.WriteFile(hookPath, []byte(hookScript), 0755); err != nil {
+					t.Fatalf("failed to create post-init hook: %v", err)
+				}
+			},
+			wantErr: false,
+			validateFunc: func(t *testing.T, projectRoot string) {
+				// Check that post-init hook was executed
+				markerPath := filepath.Join(projectRoot, "post-init-marker")
+				data, err := os.ReadFile(markerPath)
+				if err != nil {
+					t.Error("post-init hook was not executed (marker file not found)")
+					return
+				}
+				if strings.TrimSpace(string(data)) != "POST-INIT-HOOK-EXECUTED" {
+					t.Errorf("post-init hook marker has wrong content: %q", string(data))
+				}
+
+				// Check that repository names were passed
+				reposPath := filepath.Join(projectRoot, "post-init-repos")
+				reposData, err := os.ReadFile(reposPath)
+				if err != nil {
+					t.Error("post-init hook did not write repos file")
+					return
+				}
+				// Empty repository list, so should be empty
+				if strings.TrimSpace(string(reposData)) != "" {
+					t.Errorf("expected empty repos list, got: %q", string(reposData))
+				}
+			},
+		},
+		{
 			name:        "existing repository gets skipped",
 			allowDelete: false,
 			setupFunc: func(t *testing.T, projectRoot string) {
 				yamlContent := `version: 1
 repositories:
-  - name: existing-repo.git
+  - name: existing-repo
     url: https://example.com/repo.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -216,7 +265,7 @@ repositories: []
 	if err == nil {
 		t.Error("expected error due to lock contention, got nil")
 	}
-	if !strings.Contains(err.Error(), "another devslot process") {
+	if !strings.Contains(err.Error(), "another devslot process") && !strings.Contains(err.Error(), "lock is already held") {
 		t.Errorf("expected lock error, got: %v", err)
 	}
 }

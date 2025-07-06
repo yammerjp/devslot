@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/yammerjp/devslot/internal/config"
+	"github.com/yammerjp/devslot/internal/errors"
 	"github.com/yammerjp/devslot/internal/git"
+	"github.com/yammerjp/devslot/internal/hook"
 	"github.com/yammerjp/devslot/internal/lock"
 )
 
@@ -25,7 +28,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 	ctx.LogDebug("looking for project root", "currentDir", currentDir)
 	projectRoot, err := config.FindProjectRoot(currentDir)
 	if err != nil {
-		return fmt.Errorf("not in a devslot project: %w", err)
+		return err // config.FindProjectRoot already returns a user-friendly error
 	}
 	ctx.LogDebug("found project root", "projectRoot", projectRoot)
 
@@ -61,7 +64,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 
 	// Clone each repository as bare
 	for _, repo := range cfg.Repositories {
-		bareRepoPath := filepath.Join(reposDir, repo.Name)
+		bareRepoPath := filepath.Join(reposDir, repo.BareRepoName())
 
 		// Check if repository already exists
 		if git.IsValidRepository(bareRepoPath) {
@@ -73,7 +76,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 		ctx.Printf("Cloning %s from %s...\n", repo.Name, repo.URL)
 		ctx.LogInfo("cloning repository", "name", repo.Name, "url", repo.URL)
 		if err := git.CloneBare(repo.URL, bareRepoPath); err != nil {
-			return fmt.Errorf("failed to clone %s: %w", repo.Name, err)
+			return errors.CloneFailed(repo.Name, err)
 		}
 		ctx.Printf("Successfully cloned %s\n", repo.Name)
 	}
@@ -89,7 +92,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 		// Build a map of configured repositories
 		configuredRepos := make(map[string]bool)
 		for _, repo := range cfg.Repositories {
-			configuredRepos[repo.Name] = true
+			configuredRepos[repo.BareRepoName()] = true
 		}
 
 		// Remove repositories not in configuration
@@ -103,6 +106,25 @@ func (c *InitCmd) Run(ctx *Context) error {
 				}
 			}
 		}
+	}
+
+	// Run post-init hook
+	hookRunner := hook.NewRunner(projectRoot)
+	ctx.LogDebug("running post-init hook")
+
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := hookRunner.Run(hook.PostInit, "", hookEnv); err != nil {
+		ctx.LogWarn("post-init hook failed", "error", err)
+		return fmt.Errorf("post-init hook failed: %w", err)
 	}
 
 	ctx.Println("\nInitialization complete!")
