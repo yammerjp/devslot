@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.2.4](https://github.com/yammerjp/devslot/compare/v0.2.3...v0.2.4) - 2025-07-06
+- Fix GoReleaser build failure after project refactoring by @yammerjp in https://github.com/yammerjp/devslot/pull/27
+
 ## [v0.2.3](https://github.com/yammerjp/devslot/compare/v0.2.2...v0.2.3) - 2025-07-06
 - Add E2E tests to CI workflow by @yammerjp in https://github.com/yammerjp/devslot/pull/19
 - Refactor: Implement package structure following golang-standards/project-layout by @yammerjp in https://github.com/yammerjp/devslot/pull/21
