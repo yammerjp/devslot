@@ -10,12 +10,11 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
       - darwin
     goarch:
       - amd64
       - arm64
-    main: ./main.go
+    main: ./cmd/devslot/main.go
     binary: devslot
     ldflags:
       - -s -w -X main.version={{.Version}}
@@ -29,9 +28,6 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    format_overrides:
-      - goos: windows
-        format: zip
 
 checksum:
   name_template: 'checksums.txt'
