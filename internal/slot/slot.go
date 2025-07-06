@@ -50,7 +50,7 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 
 	// Create worktrees for each repository
 	for _, repo := range cfg.Repositories {
-		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.Name)
+		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.BareRepoName())
 		worktreePath := filepath.Join(slotPath, repo.Name)
 
 		// Ensure bare repository exists
@@ -79,9 +79,19 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 	}
 
 	// Run post-create hook
-	if err := m.hookRunner.Run(hook.PostCreate, name, nil); err != nil {
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := m.hookRunner.Run(hook.PostCreate, name, hookEnv); err != nil {
 		// Cleanup on hook failure
-		if destroyErr := m.Destroy(name); destroyErr != nil {
+		if destroyErr := m.Destroy(name, cfg); destroyErr != nil {
 			return fmt.Errorf("post-create hook failed: %w (cleanup also failed: %v)", err, destroyErr)
 		}
 		return fmt.Errorf("post-create hook failed: %w", err)
@@ -91,14 +101,24 @@ func (m *Manager) Create(name string, cfg *config.Config, opts *CreateOptions) e
 }
 
 // Destroy removes a slot
-func (m *Manager) Destroy(name string) error {
+func (m *Manager) Destroy(name string, cfg *config.Config) error {
 	slotPath := m.getSlotPath(name)
 	if _, err := os.Stat(slotPath); os.IsNotExist(err) {
 		return errors.SlotNotFound(name)
 	}
 
 	// Run pre-destroy hook
-	if err := m.hookRunner.Run(hook.PreDestroy, name, nil); err != nil {
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := m.hookRunner.Run(hook.PreDestroy, name, hookEnv); err != nil {
 		return fmt.Errorf("pre-destroy hook failed: %w", err)
 	}
 
@@ -113,7 +133,13 @@ func (m *Manager) Destroy(name string) error {
 			continue
 		}
 
-		bareRepoPath := filepath.Join(m.projectRoot, "repos", entry.Name())
+		// Try both with and without .git suffix for backward compatibility
+		bareRepoPath := filepath.Join(m.projectRoot, "repos", entry.Name()+".git")
+		if !git.IsValidRepository(bareRepoPath) {
+			// Fallback to old naming convention
+			bareRepoPath = filepath.Join(m.projectRoot, "repos", entry.Name())
+		}
+
 		worktreePath := filepath.Join(slotPath, entry.Name())
 
 		if git.IsValidRepository(bareRepoPath) {
@@ -163,7 +189,7 @@ func (m *Manager) Reload(name string, cfg *config.Config) error {
 
 	// Check each repository
 	for _, repo := range cfg.Repositories {
-		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.Name)
+		bareRepoPath := filepath.Join(m.projectRoot, "repos", repo.BareRepoName())
 		worktreePath := filepath.Join(slotPath, repo.Name)
 
 		// Check if worktree exists
@@ -182,7 +208,17 @@ func (m *Manager) Reload(name string, cfg *config.Config) error {
 	}
 
 	// Run post-reload hook
-	if err := m.hookRunner.Run(hook.PostReload, name, nil); err != nil {
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := m.hookRunner.Run(hook.PostReload, name, hookEnv); err != nil {
 		return fmt.Errorf("post-reload hook failed: %w", err)
 	}
 

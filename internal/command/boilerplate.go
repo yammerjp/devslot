@@ -47,11 +47,11 @@ func (c *BoilerplateCmd) Run(ctx *Context) error {
 	devslotYamlContent := `# devslot configuration file
 version: 1
 repositories:
-  # Add your repositories here
+  # Add your repositories here (without .git suffix)
   # Example:
-  # - name: my-app.git
+  # - name: my-app
   #   url: https://github.com/myorg/my-app.git
-  # - name: my-lib.git
+  # - name: my-lib
   #   url: https://github.com/myorg/my-lib.git
 `
 	if err := createFileIfNotExists(devslotYamlPath, devslotYamlContent); err != nil {
@@ -90,8 +90,9 @@ Thumbs.db
 # Environment variables:
 #   DEVSLOT_ROOT: The root directory of the project
 #   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
 
-# echo "Repositories initialized!"
+# echo "Repositories initialized: $DEVSLOT_REPOSITORIES"
 
 # Example: Set up git config for all repositories
 # for repo in "$DEVSLOT_REPOS_DIR"/*.git; do
@@ -116,8 +117,9 @@ Thumbs.db
 #   DEVSLOT_SLOT_NAME: The name of the slot
 #   DEVSLOT_SLOT_DIR: The full path to the slot directory
 #   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
 
-# echo "Slot $DEVSLOT_SLOT_NAME has been created!"
+# echo "Slot $DEVSLOT_SLOT_NAME has been created with repos: $DEVSLOT_REPOSITORIES"
 
 # Example: Install dependencies for each repository
 # for repo in "$DEVSLOT_SLOT_DIR"/*; do
@@ -134,8 +136,9 @@ Thumbs.db
 #   DEVSLOT_SLOT_NAME: The name of the slot
 #   DEVSLOT_SLOT_DIR: The full path to the slot directory
 #   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
 
-# echo "Slot $DEVSLOT_SLOT_NAME will be destroyed!"
+# echo "Slot $DEVSLOT_SLOT_NAME will be destroyed (repos: $DEVSLOT_REPOSITORIES)"
 
 # Example: Backup important files
 # backup_dir="$DEVSLOT_ROOT/backups/$DEVSLOT_SLOT_NAME-$(date +%Y%m%d-%H%M%S)"
@@ -149,8 +152,9 @@ Thumbs.db
 #   DEVSLOT_SLOT_NAME: The name of the slot
 #   DEVSLOT_SLOT_DIR: The full path to the slot directory
 #   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
 
-# echo "Slot $DEVSLOT_SLOT_NAME has been reloaded!"
+# echo "Slot $DEVSLOT_SLOT_NAME has been reloaded (repos: $DEVSLOT_REPOSITORIES)"
 
 # Example: Sync dependencies or update configurations
 # echo "Updating dependencies..."

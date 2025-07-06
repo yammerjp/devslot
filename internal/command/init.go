@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/yammerjp/devslot/internal/config"
@@ -63,7 +64,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 
 	// Clone each repository as bare
 	for _, repo := range cfg.Repositories {
-		bareRepoPath := filepath.Join(reposDir, repo.Name)
+		bareRepoPath := filepath.Join(reposDir, repo.BareRepoName())
 
 		// Check if repository already exists
 		if git.IsValidRepository(bareRepoPath) {
@@ -91,7 +92,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 		// Build a map of configured repositories
 		configuredRepos := make(map[string]bool)
 		for _, repo := range cfg.Repositories {
-			configuredRepos[repo.Name] = true
+			configuredRepos[repo.BareRepoName()] = true
 		}
 
 		// Remove repositories not in configuration
@@ -110,7 +111,18 @@ func (c *InitCmd) Run(ctx *Context) error {
 	// Run post-init hook
 	hookRunner := hook.NewRunner(projectRoot)
 	ctx.LogDebug("running post-init hook")
-	if err := hookRunner.Run(hook.PostInit, "", nil); err != nil {
+
+	// Build repository names list
+	repoNames := make([]string, len(cfg.Repositories))
+	for i, repo := range cfg.Repositories {
+		repoNames[i] = repo.Name
+	}
+
+	hookEnv := map[string]string{
+		"DEVSLOT_REPOSITORIES": strings.Join(repoNames, " "),
+	}
+
+	if err := hookRunner.Run(hook.PostInit, "", hookEnv); err != nil {
 		ctx.LogWarn("post-init hook failed", "error", err)
 		return fmt.Errorf("post-init hook failed: %w", err)
 	}

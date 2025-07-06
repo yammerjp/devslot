@@ -29,7 +29,7 @@ func TestCreateCmd_Run(t *testing.T) {
 				// Create devslot.yaml
 				yamlContent := `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: https://github.com/example/repo1.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -55,7 +55,7 @@ repositories:
 				}
 
 				// Check if worktree was created
-				worktreePath := filepath.Join(slotPath, "repo1.git")
+				worktreePath := filepath.Join(slotPath, "repo1")
 				if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
 					t.Error("expected worktree to exist")
 				}
@@ -82,7 +82,7 @@ repositories:
 				// Create devslot.yaml
 				yamlContent := `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: https://github.com/example/repo1.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -130,7 +130,7 @@ repositories: []
 				// Create devslot.yaml with non-existent repository
 				yamlContent := `version: 1
 repositories:
-  - name: missing.git
+  - name: missing
     url: https://github.com/example/missing.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)

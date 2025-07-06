@@ -20,6 +20,11 @@ type Repository struct {
 	URL  string `yaml:"url"`
 }
 
+// BareRepoName returns the name for the bare repository directory (with .git suffix)
+func (r Repository) BareRepoName() string {
+	return r.Name + ".git"
+}
+
 // Load reads and parses the devslot.yaml configuration file
 func Load(rootPath string) (*Config, error) {
 	configPath := filepath.Join(rootPath, "devslot.yaml")

@@ -19,9 +19,9 @@ func TestLoad(t *testing.T) {
 			name: "valid config",
 			yamlContent: `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: https://github.com/example/repo1.git
-  - name: repo2.git
+  - name: repo2
     url: https://github.com/example/repo2.git
 `,
 			wantErr:   false,

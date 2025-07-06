@@ -84,7 +84,7 @@ repositories: []
 
 				yamlContent := `version: 1
 repositories:
-  - name: local-repo.git
+  - name: local-repo
     url: ` + localRepoPath + `
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
@@ -120,6 +120,7 @@ repositories: []
 
 				hookScript := `#!/bin/bash
 echo "POST-INIT-HOOK-EXECUTED" > "$DEVSLOT_ROOT/post-init-marker"
+echo "$DEVSLOT_REPOSITORIES" > "$DEVSLOT_ROOT/post-init-repos"
 `
 				hookPath := filepath.Join(hooksDir, "post-init")
 				if err := os.WriteFile(hookPath, []byte(hookScript), 0755); err != nil {
@@ -138,6 +139,18 @@ echo "POST-INIT-HOOK-EXECUTED" > "$DEVSLOT_ROOT/post-init-marker"
 				if strings.TrimSpace(string(data)) != "POST-INIT-HOOK-EXECUTED" {
 					t.Errorf("post-init hook marker has wrong content: %q", string(data))
 				}
+
+				// Check that repository names were passed
+				reposPath := filepath.Join(projectRoot, "post-init-repos")
+				reposData, err := os.ReadFile(reposPath)
+				if err != nil {
+					t.Error("post-init hook did not write repos file")
+					return
+				}
+				// Empty repository list, so should be empty
+				if strings.TrimSpace(string(reposData)) != "" {
+					t.Errorf("expected empty repos list, got: %q", string(reposData))
+				}
 			},
 		},
 		{
@@ -146,7 +159,7 @@ echo "POST-INIT-HOOK-EXECUTED" > "$DEVSLOT_ROOT/post-init-marker"
 			setupFunc: func(t *testing.T, projectRoot string) {
 				yamlContent := `version: 1
 repositories:
-  - name: existing-repo.git
+  - name: existing-repo
     url: https://example.com/repo.git
 `
 				testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
