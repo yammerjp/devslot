@@ -111,3 +111,20 @@ slots/
 `
 	CreateFile(t, filepath.Join(root, ".gitignore"), gitignoreContent)
 }
+
+// Chdir changes directory and returns a cleanup function that logs errors
+func Chdir(t *testing.T, dir string) func() {
+	t.Helper()
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current directory: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Failed to change directory: %v", err)
+	}
+	return func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Warning: failed to restore directory: %v", err)
+		}
+	}
+}

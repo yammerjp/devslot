@@ -17,23 +17,6 @@ func execCommand(name string, arg ...string) *exec.Cmd {
 	return exec.Command(name, arg...)
 }
 
-// testChdir changes directory and returns a cleanup function that logs errors
-func testChdir(t *testing.T, dir string) func() {
-	t.Helper()
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current directory: %v", err)
-	}
-	if err := os.Chdir(dir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
-	return func() {
-		if err := os.Chdir(originalDir); err != nil {
-			t.Logf("Warning: failed to restore directory: %v", err)
-		}
-	}
-}
-
 func TestInitCmd_Run(t *testing.T) {
 	// Skip network-dependent tests in CI
 	if os.Getenv("CI") == "true" {
@@ -159,7 +142,7 @@ repositories:
 			}
 
 			// Change to project directory
-			defer testChdir(t, projectRoot)()
+			defer testutil.Chdir(t, projectRoot)()
 
 			if tt.setupFunc != nil {
 				tt.setupFunc(t, projectRoot)
@@ -171,7 +154,7 @@ repositories:
 			}
 			ctx := &Context{Writer: &buf}
 
-			err = cmd.Run(ctx)
+			err := cmd.Run(ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("InitCmd.Run() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -204,7 +187,7 @@ repositories: []
 	testutil.CreateFile(t, filepath.Join(projectRoot, "devslot.yaml"), yamlContent)
 
 	// Change to project directory
-	defer testChdir(t, projectRoot)()
+	defer testutil.Chdir(t, projectRoot)()
 
 	// Create lock manually to simulate concurrent access
 	lockPath := filepath.Join(projectRoot, ".devslot.lock")
