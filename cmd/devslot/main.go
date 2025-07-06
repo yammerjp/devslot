@@ -2,13 +2,16 @@ package main
 
 import (
 	"io"
+	"log/slog"
 	"os"
 
 	"github.com/alecthomas/kong"
 	"github.com/yammerjp/devslot/internal/command"
+	"github.com/yammerjp/devslot/internal/logger"
 )
 
 type CLI struct {
+	Verbose     bool                   `long:"verbose" help:"Enable verbose logging"`
 	Boilerplate command.BoilerplateCmd `cmd:"" help:"Generate initial project structure in current directory"`
 	Init        command.InitCmd        `cmd:"" help:"Sync bare repositories defined in devslot.yaml into repos/"`
 	Create      command.CreateCmd      `cmd:"" help:"Create a new slot (multi-repo worktree environment)"`
@@ -24,6 +27,7 @@ type CLI struct {
 type App struct {
 	parser      *kong.Kong
 	writer      io.Writer
+	cli         *CLI
 	exitHandler func(int)
 }
 
@@ -53,6 +57,7 @@ func NewApp(writer io.Writer) *App {
 	}
 
 	app.parser = parser
+	app.cli = cli
 	return app
 }
 
@@ -73,8 +78,19 @@ func (app *App) Run(args []string) error {
 		return err
 	}
 
+	// Access the CLI struct to get verbose flag
+
+	// Create logger with appropriate log level
+	logOpts := logger.DefaultOptions()
+	logOpts.Writer = os.Stderr // Log to stderr to keep stdout clean
+	if app.cli.Verbose {
+		logOpts.Level = slog.LevelDebug
+	}
+	log := logger.New(logOpts)
+
 	cmdCtx := &command.Context{
 		Writer: app.writer,
+		Logger: log,
 	}
 
 	return ctx.Run(cmdCtx)
@@ -83,7 +99,7 @@ func (app *App) Run(args []string) error {
 func main() {
 	app := NewApp(os.Stdout)
 	if err := app.Run(os.Args[1:]); err != nil {
+		// FatalIfErrorf handles exit code and error display
 		app.parser.FatalIfErrorf(err)
-		os.Exit(1)
 	}
 }

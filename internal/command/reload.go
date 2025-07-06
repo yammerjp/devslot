@@ -33,7 +33,8 @@ func (c *ReloadCmd) Run(ctx *Context) error {
 	}
 	defer func() {
 		if err := lockFile.Release(); err != nil {
-			fmt.Fprintf(ctx.Writer, "Warning: failed to release lock: %v\n", err)
+			ctx.Printf("Warning: failed to release lock: %v\n", err)
+			ctx.LogWarn("failed to release lock", "error", err)
 		}
 	}()
 
@@ -45,13 +46,15 @@ func (c *ReloadCmd) Run(ctx *Context) error {
 
 	// Reload slot
 	mgr := slot.NewManager(projectRoot)
-	fmt.Fprintf(ctx.Writer, "Reloading slot '%s'...\n", c.SlotName)
+	ctx.Printf("Reloading slot '%s'...\n", c.SlotName)
+	ctx.LogInfo("reloading slot", "slot", c.SlotName)
 
 	if err := mgr.Reload(c.SlotName, cfg); err != nil {
 		return fmt.Errorf("failed to reload slot: %w", err)
 	}
 
-	fmt.Fprintf(ctx.Writer, "Slot '%s' reloaded successfully!\n", c.SlotName)
+	ctx.Printf("Slot '%s' reloaded successfully!\n", c.SlotName)
+	ctx.LogInfo("slot reloaded", "slot", c.SlotName)
 
 	return nil
 }

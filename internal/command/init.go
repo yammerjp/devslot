@@ -22,10 +22,12 @@ func (c *InitCmd) Run(ctx *Context) error {
 		return fmt.Errorf("failed to get current directory: %w", err)
 	}
 
+	ctx.LogDebug("looking for project root", "currentDir", currentDir)
 	projectRoot, err := config.FindProjectRoot(currentDir)
 	if err != nil {
 		return fmt.Errorf("not in a devslot project: %w", err)
 	}
+	ctx.LogDebug("found project root", "projectRoot", projectRoot)
 
 	// Acquire lock
 	l := lock.New(filepath.Join(projectRoot, ".devslot.lock"))
@@ -34,7 +36,7 @@ func (c *InitCmd) Run(ctx *Context) error {
 	}
 	defer func() {
 		if err := l.Release(); err != nil {
-			fmt.Fprintf(ctx.Writer, "Warning: failed to release lock: %v\n", err)
+			ctx.LogWarn("failed to release lock", "error", err)
 		}
 	}()
 
@@ -63,15 +65,17 @@ func (c *InitCmd) Run(ctx *Context) error {
 
 		// Check if repository already exists
 		if git.IsValidRepository(bareRepoPath) {
-			fmt.Fprintf(ctx.Writer, "Repository %s already exists, skipping...\n", repo.Name)
+			ctx.Printf("Repository %s already exists, skipping...\n", repo.Name)
+			ctx.LogInfo("skipping existing repository", "name", repo.Name)
 			continue
 		}
 
-		fmt.Fprintf(ctx.Writer, "Cloning %s from %s...\n", repo.Name, repo.URL)
+		ctx.Printf("Cloning %s from %s...\n", repo.Name, repo.URL)
+		ctx.LogInfo("cloning repository", "name", repo.Name, "url", repo.URL)
 		if err := git.CloneBare(repo.URL, bareRepoPath); err != nil {
 			return fmt.Errorf("failed to clone %s: %w", repo.Name, err)
 		}
-		fmt.Fprintf(ctx.Writer, "Successfully cloned %s\n", repo.Name)
+		ctx.Printf("Successfully cloned %s\n", repo.Name)
 	}
 
 	// Handle --allow-delete flag
@@ -92,16 +96,18 @@ func (c *InitCmd) Run(ctx *Context) error {
 		for _, entry := range entries {
 			if entry.IsDir() && !configuredRepos[entry.Name()] {
 				repoPath := filepath.Join(reposDir, entry.Name())
-				fmt.Fprintf(ctx.Writer, "Removing unlisted repository: %s\n", entry.Name())
+				ctx.Printf("Removing unlisted repository: %s\n", entry.Name())
+				ctx.LogInfo("removing unlisted repository", "name", entry.Name())
 				if err := os.RemoveAll(repoPath); err != nil {
-					fmt.Fprintf(ctx.Writer, "Warning: failed to remove %s: %v\n", entry.Name(), err)
+					ctx.LogWarn("failed to remove repository", "name", entry.Name(), "error", err)
 				}
 			}
 		}
 	}
 
-	fmt.Fprintln(ctx.Writer, "\nInitialization complete!")
-	fmt.Fprintln(ctx.Writer, "You can now create a slot with 'devslot create <slot-name>'")
+	ctx.Println("\nInitialization complete!")
+	ctx.Println("You can now create a slot with 'devslot create <slot-name>'")
+	ctx.LogInfo("initialization completed")
 
 	return nil
 }
