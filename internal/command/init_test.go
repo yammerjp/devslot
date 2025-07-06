@@ -149,7 +149,7 @@ repositories:
 			if err := os.Chdir(projectRoot); err != nil {
 				t.Fatalf("failed to change directory: %v", err)
 			}
-			defer os.Chdir(originalDir)
+			defer func() { _ = os.Chdir(originalDir) }()
 
 			if tt.setupFunc != nil {
 				tt.setupFunc(t, projectRoot)
@@ -201,7 +201,7 @@ repositories: []
 	if err := os.Chdir(projectRoot); err != nil {
 		t.Fatalf("failed to change directory: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() { _ = os.Chdir(originalDir) }()
 
 	// Create lock manually to simulate concurrent access
 	lockPath := filepath.Join(projectRoot, ".devslot.lock")
@@ -215,7 +215,7 @@ repositories: []
 	if err := syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
 		t.Fatalf("failed to acquire lock: %v", err)
 	}
-	defer syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
+	defer func() { _ = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN) }()
 
 	// Try to run init command while lock is held
 	var buf bytes.Buffer
