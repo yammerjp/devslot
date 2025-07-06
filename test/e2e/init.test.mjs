@@ -8,7 +8,7 @@ $.verbose = false
 // Test utilities
 const testDir = (await $`mktemp -d`).stdout.trim()
 const projectRoot = process.cwd()
-const devslotBinary = path.join(projectRoot, 'devslot')
+const devslotBinary = path.join(projectRoot, 'build', 'devslot')
 
 // Cleanup on exit
 process.on('exit', () => {
