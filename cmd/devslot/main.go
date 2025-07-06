@@ -10,6 +10,9 @@ import (
 	"github.com/yammerjp/devslot/internal/logger"
 )
 
+// version is set by ldflags during build
+var version = "dev"
+
 type CLI struct {
 	Verbose     bool                   `long:"verbose" help:"Enable verbose logging"`
 	Boilerplate command.BoilerplateCmd `cmd:"" help:"Generate initial project structure in current directory"`
@@ -49,7 +52,7 @@ func NewApp(writer io.Writer) *App {
 			app.exitHandler(code)
 		}),
 		kong.Vars{
-			"version": "dev", // This should be set by ldflags during build
+			"version": version,
 		},
 	)
 	if err != nil {
@@ -97,6 +100,9 @@ func (app *App) Run(args []string) error {
 }
 
 func main() {
+	// Set the version in the command package
+	command.Version = version
+
 	app := NewApp(os.Stdout)
 	if err := app.Run(os.Args[1:]); err != nil {
 		// FatalIfErrorf handles exit code and error display
