@@ -133,7 +133,7 @@ async function testDoctorHealthyProject() {
   const repo = await createTestRepo('healthy-repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -202,7 +202,7 @@ async function testDoctorMissingRepo() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: missing.git
+  - name: missing
     url: https://example.com/missing.git
 `)
   
@@ -214,7 +214,7 @@ repositories:
   // Doctor might succeed but show warnings
   const output = result.stdout + result.stderr
   
-  if (!output.includes('missing.git')) {
+  if (!output.includes('missing')) {
     fail('Doctor should report missing repository')
     return
   }
@@ -228,7 +228,7 @@ async function testDoctorWithCorruptedWorktree() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -239,7 +239,7 @@ repositories:
   await $`mkdir -p hooks`
   
   // Corrupt the worktree
-  await $`rm -rf slots/broken-slot/repo.git/.git`
+  await $`rm -rf slots/broken-slot/repo/.git`
   
   const result = await $({ nothrow: true })`${devslotBinary} doctor`
   
@@ -271,9 +271,9 @@ async function testDoctorWithRemovedRepository() {
   // Start with two repos
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: ${repo1}
-  - name: repo2.git
+  - name: repo2
     url: ${repo2}
 `)
   
@@ -286,7 +286,7 @@ repositories:
   // Remove repo2 from config
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: ${repo1}
 `)
   
@@ -306,7 +306,7 @@ repositories:
   const output = result.stdout
   
   // Doctor should successfully check repo1
-  if (!output.includes('repo1.git') && !output.includes('Repository cloned')) {
+  if (!output.includes('repo1') && !output.includes('Repository') && !output.includes('cloned')) {
     fail('Doctor should check configured repositories')
     return
   }

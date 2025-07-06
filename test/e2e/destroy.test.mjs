@@ -72,7 +72,7 @@ async function testBasicDestroy() {
   const repo = await createTestRepo('repo1')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -142,7 +142,7 @@ async function testDestroyWithChanges() {
   const repo = await createTestRepo('repo-with-changes')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -150,7 +150,7 @@ repositories:
   await $({ nothrow: true })`${devslotBinary} create work-slot`
   
   // Make changes in the worktree
-  await fs.writeFile('slots/work-slot/repo.git/new-file.txt', 'Some changes')
+  await fs.writeFile('slots/work-slot/repo/new-file.txt', 'Some changes')
   
   // Destroy should still work (pre-destroy hook might warn but not block)
   const result = await $({ nothrow: true })`${devslotBinary} destroy work-slot`
@@ -174,7 +174,7 @@ async function testDestroyWithHook() {
   const repo = await createTestRepo('repo-hook')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -219,7 +219,7 @@ async function testDestroyFailingHook() {
   const repo = await createTestRepo('repo-failing-hook')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -264,9 +264,9 @@ async function testDestroyMultipleRepos() {
   
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo1.git
+  - name: repo1
     url: ${repo1}
-  - name: repo2.git
+  - name: repo2
     url: ${repo2}
 `)
   
@@ -274,8 +274,8 @@ repositories:
   await $({ nothrow: true })`${devslotBinary} create multi-slot`
   
   // Verify both worktrees exist
-  if (!await fs.pathExists('slots/multi-slot/repo1.git') || 
-      !await fs.pathExists('slots/multi-slot/repo2.git')) {
+  if (!await fs.pathExists('slots/multi-slot/repo1') || 
+      !await fs.pathExists('slots/multi-slot/repo2')) {
     fail('Multi-repo slot not created properly')
     return
   }

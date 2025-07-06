@@ -94,7 +94,7 @@ async function testListSingleSlot() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -123,7 +123,7 @@ async function testListMultipleSlots() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -165,7 +165,7 @@ async function testListAfterDestroy() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -231,7 +231,7 @@ async function testListWithInvalidSlots() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   

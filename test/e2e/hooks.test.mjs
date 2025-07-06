@@ -71,7 +71,7 @@ async function testPostCreateHook() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -133,7 +133,7 @@ async function testPreDestroyHook() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -191,7 +191,7 @@ async function testPostReloadHook() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -247,7 +247,7 @@ async function testHookEnvironmentVariables() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -307,7 +307,7 @@ async function testHookFailureHandling() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -381,7 +381,7 @@ async function testMissingHooks() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -416,7 +416,7 @@ async function testHookWithComplexOperations() {
   const repo = await createTestRepo('repo')
   await fs.writeFile('devslot.yaml', `version: 1
 repositories:
-  - name: repo.git
+  - name: repo
     url: ${repo}
 `)
   
@@ -451,11 +451,11 @@ cat > "$DEVSLOT_SLOT_DIR/.vscode/settings.json" << 'EOF'
 EOF
 
 # Create a script in the worktree
-cat > "$DEVSLOT_SLOT_DIR/repo.git/setup.sh" << 'EOF'
+cat > "$DEVSLOT_SLOT_DIR/repo/setup.sh" << 'EOF'
 #!/bin/bash
 echo "Development environment ready!"
 EOF
-chmod +x "$DEVSLOT_SLOT_DIR/repo.git/setup.sh"
+chmod +x "$DEVSLOT_SLOT_DIR/repo/setup.sh"
 
 echo "Complex setup completed!"
 `, { mode: 0o755 })
@@ -480,13 +480,13 @@ echo "Complex setup completed!"
     return
   }
   
-  if (!await fs.pathExists('slots/complex-slot/repo.git/setup.sh')) {
+  if (!await fs.pathExists('slots/complex-slot/repo/setup.sh')) {
     fail('Hook did not create setup script in worktree')
     return
   }
   
   // Check if setup.sh is executable
-  const stats = await fs.stat('slots/complex-slot/repo.git/setup.sh')
+  const stats = await fs.stat('slots/complex-slot/repo/setup.sh')
   if (!(stats.mode & 0o100)) {
     fail('Setup script is not executable')
     return
