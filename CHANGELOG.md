@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.2.5](https://github.com/yammerjp/devslot/compare/v0.2.4...v0.2.5) - 2025-07-06
+- Implement automatic branch creation and fix environment variables by @yammerjp in https://github.com/yammerjp/devslot/pull/29
+
 ## [v0.2.4](https://github.com/yammerjp/devslot/compare/v0.2.3...v0.2.4) - 2025-07-06
 - Fix GoReleaser build failure after project refactoring by @yammerjp in https://github.com/yammerjp/devslot/pull/27
 
