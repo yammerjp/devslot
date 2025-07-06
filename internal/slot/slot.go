@@ -63,7 +63,9 @@ func (m *Manager) Create(name string, cfg *config.Config) error {
 	// Run post-create hook
 	if err := m.hookRunner.Run(hook.PostCreate, name, nil); err != nil {
 		// Cleanup on hook failure
-		_ = m.Destroy(name)
+		if destroyErr := m.Destroy(name); destroyErr != nil {
+			return fmt.Errorf("post-create hook failed: %w (cleanup also failed: %v)", err, destroyErr)
+		}
 		return fmt.Errorf("post-create hook failed: %w", err)
 	}
 

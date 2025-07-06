@@ -9,19 +9,29 @@ import (
 	"github.com/yammerjp/devslot/internal/testutil"
 )
 
+// testChdir changes directory and returns a cleanup function that logs errors
+func testChdir(t *testing.T, dir string) func() {
+	t.Helper()
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current directory: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Failed to change directory: %v", err)
+	}
+	return func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Warning: failed to restore directory: %v", err)
+		}
+	}
+}
+
 func TestBoilerplateCmd_Run(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir := testutil.TempDir(t)
 
 	// Change to temp directory
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current directory: %v", err)
-	}
-	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
-	defer func() { _ = os.Chdir(originalDir) }()
+	defer testChdir(t, tempDir)()
 
 	// Run boilerplate command
 	var buf bytes.Buffer
@@ -97,14 +107,7 @@ func TestBoilerplateCmd_RunTwice(t *testing.T) {
 	tempDir := testutil.TempDir(t)
 
 	// Change to temp directory
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current directory: %v", err)
-	}
-	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
-	defer func() { _ = os.Chdir(originalDir) }()
+	defer testChdir(t, tempDir)()
 
 	// Run boilerplate command twice
 	cmd := &BoilerplateCmd{}
@@ -131,14 +134,7 @@ func TestBoilerplateCmd_ExistingGitignore(t *testing.T) {
 	tempDir := testutil.TempDir(t)
 
 	// Change to temp directory
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current directory: %v", err)
-	}
-	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
-	defer func() { _ = os.Chdir(originalDir) }()
+	defer testChdir(t, tempDir)()
 
 	// Create existing .gitignore
 	existingContent := "node_modules/\n*.log\n"
