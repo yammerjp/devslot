@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.1](https://github.com/yammerjp/devslot/compare/v0.3.0...v0.3.1) - 2025-07-08
+- Add claude GitHub actions 1751846389500 by @yammerjp in https://github.com/yammerjp/devslot/pull/42
+- feat: implement post-destroy hook by @yammerjp in https://github.com/yammerjp/devslot/pull/44
+
 ## [v0.3.0](https://github.com/yammerjp/devslot/compare/v0.2.5...v0.3.0) - 2025-07-06
 - Remove Windows support from GoReleaser configuration by @yammerjp in https://github.com/yammerjp/devslot/pull/30
 - feat: improve error messages with actionable suggestions by @yammerjp in https://github.com/yammerjp/devslot/pull/33
