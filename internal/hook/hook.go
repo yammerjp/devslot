@@ -13,10 +13,11 @@ import (
 type Type string
 
 const (
-	PostCreate Type = "post-create"
-	PreDestroy Type = "pre-destroy"
-	PostReload Type = "post-reload"
-	PostInit   Type = "post-init"
+	PostCreate  Type = "post-create"
+	PreDestroy  Type = "pre-destroy"
+	PostDestroy Type = "post-destroy"
+	PostReload  Type = "post-reload"
+	PostInit    Type = "post-init"
 )
 
 // Runner executes hooks

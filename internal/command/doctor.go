@@ -78,7 +78,7 @@ func (c *DoctorCmd) Run(ctx *Context) error {
 
 	// Check hooks
 	ctx.Println("\nChecking hooks...")
-	hooks := []string{"post-init", "post-create", "pre-destroy", "post-reload"}
+	hooks := []string{"post-init", "post-create", "pre-destroy", "post-destroy", "post-reload"}
 	for _, hookName := range hooks {
 		hookPath := filepath.Join(projectRoot, "hooks", hookName)
 		if info, err := os.Stat(hookPath); err == nil {

@@ -303,6 +303,99 @@ repositories:
   pass()
 }
 
+async function testPostDestroyHook() {
+  await setupTest('post_destroy_hook')
+  
+  const repo = await createTestRepo('repo-post-destroy')
+  await fs.writeFile('devslot.yaml', `version: 1
+repositories:
+  - name: repo
+    url: ${repo}
+`)
+  
+  // Create post-destroy hook
+  await $`mkdir -p hooks`
+  await fs.writeFile('hooks/post-destroy', `#!/bin/bash
+echo "Post-destroy hook executed for slot: $DEVSLOT_SLOT_NAME"
+echo "$DEVSLOT_SLOT_NAME destroyed at $(date)" >> destruction.log
+`, { mode: 0o755 })
+  
+  await $({ nothrow: true })`${devslotBinary} init`
+  await $({ nothrow: true })`${devslotBinary} create post-hook-slot`
+  
+  // Destroy with post-destroy hook
+  const result = await $({ nothrow: true })`${devslotBinary} destroy post-hook-slot`
+  
+  if (!result.ok) {
+    fail(`Destroy with post-destroy hook failed: ${result.stderr}`)
+    return
+  }
+  
+  // Verify slot is removed
+  if (await fs.pathExists('slots/post-hook-slot')) {
+    fail('Slot not removed')
+    return
+  }
+  
+  // Verify post-destroy hook was executed
+  if (!await fs.pathExists('destruction.log')) {
+    fail('Post-destroy hook was not executed')
+    return
+  }
+  
+  const logContent = await fs.readFile('destruction.log', 'utf-8')
+  if (!logContent.includes('post-hook-slot destroyed at')) {
+    fail('Post-destroy hook did not log correctly')
+    return
+  }
+  
+  pass()
+}
+
+async function testPostDestroyHookFailure() {
+  await setupTest('post_destroy_hook_failure')
+  
+  const repo = await createTestRepo('repo-post-destroy-fail')
+  await fs.writeFile('devslot.yaml', `version: 1
+repositories:
+  - name: repo
+    url: ${repo}
+`)
+  
+  // Create failing post-destroy hook
+  await $`mkdir -p hooks`
+  await fs.writeFile('hooks/post-destroy', `#!/bin/bash
+echo "Post-destroy hook failing!"
+exit 1
+`, { mode: 0o755 })
+  
+  await $({ nothrow: true })`${devslotBinary} init`
+  await $({ nothrow: true })`${devslotBinary} create fail-post-slot`
+  
+  // Destroy - should succeed despite post-destroy hook failure
+  const result = await $({ nothrow: true })`${devslotBinary} destroy fail-post-slot`
+  
+  if (!result.ok) {
+    fail('Destroy should succeed even if post-destroy hook fails')
+    return
+  }
+  
+  // Verify slot is removed
+  if (await fs.pathExists('slots/fail-post-slot')) {
+    fail('Slot not removed')
+    return
+  }
+  
+  // Check for warning message
+  const output = result.stdout + result.stderr
+  if (!output.includes('Warning: post-destroy hook failed')) {
+    fail('Should show warning when post-destroy hook fails')
+    return
+  }
+  
+  pass()
+}
+
 // Main test runner
 async function runTests() {
   echo('Running devslot destroy E2E tests...')
@@ -321,6 +414,8 @@ async function runTests() {
   await testDestroyWithHook()
   await testDestroyFailingHook()
   await testDestroyMultipleRepos()
+  await testPostDestroyHook()
+  await testPostDestroyHookFailure()
   
   // Summary
   echo('\n================================')

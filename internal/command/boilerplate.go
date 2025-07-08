@@ -20,6 +20,7 @@ Creates the following:
     - post-init     (runs after 'devslot init')
     - post-create   (runs after 'devslot create')
     - pre-destroy   (runs before 'devslot destroy')
+    - post-destroy  (runs after 'devslot destroy')
     - post-reload   (runs after 'devslot reload')
   - repos/          (for bare repositories)
   - slots/          (for worktrees)
@@ -162,6 +163,25 @@ Thumbs.db
 # backup_dir="$DEVSLOT_ROOT/backups/$DEVSLOT_SLOT_NAME-$(date +%Y%m%d-%H%M%S)"
 # mkdir -p "$backup_dir"
 # echo "Backing up slot to $backup_dir..."
+`,
+		"post-destroy": `#!/bin/bash
+# This hook is called after a slot is destroyed
+# Environment variables:
+#   DEVSLOT_ROOT: The root directory of the project
+#   DEVSLOT_SLOT_NAME: The name of the slot that was destroyed
+#   DEVSLOT_REPOS_DIR: The full path to the repos directory
+#   DEVSLOT_REPOSITORIES: Space-separated list of repository names
+
+# echo "Slot $DEVSLOT_SLOT_NAME has been destroyed"
+
+# Example: Clean up related resources
+# rm -f "$DEVSLOT_ROOT/.cache/$DEVSLOT_SLOT_NAME"*
+
+# Example: Log the destruction
+# echo "$(date): Destroyed slot $DEVSLOT_SLOT_NAME" >> "$DEVSLOT_ROOT/destruction.log"
+
+# Example: Send notification
+# notify-send "DevSlot" "Slot $DEVSLOT_SLOT_NAME was destroyed" || true
 `,
 		"post-reload": `#!/bin/bash
 # This hook is called after a slot is reloaded
