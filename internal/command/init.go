@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/yammerjp/devslot/internal/config"
@@ -12,10 +13,14 @@ import (
 	"github.com/yammerjp/devslot/internal/git"
 	"github.com/yammerjp/devslot/internal/hook"
 	"github.com/yammerjp/devslot/internal/lock"
+	"golang.org/x/sync/errgroup"
 )
 
 type InitCmd struct {
 	AllowDelete bool `help:"Delete repositories no longer listed in devslot.yaml"`
+	Shallow     bool `help:"Clone repositories with shallow history (depth=1)" default:"true"`
+	Depth       int  `help:"Depth for shallow clone" default:"1"`
+	Parallel    int  `help:"Number of parallel clone operations" default:"4"`
 }
 
 func (c *InitCmd) Help() string {
@@ -75,7 +80,12 @@ func (c *InitCmd) Run(ctx *Context) error {
 	}
 
 	// Clone each repository as bare
+	var g errgroup.Group
+	g.SetLimit(c.Parallel)
+	var mu sync.Mutex
+
 	for _, repo := range cfg.Repositories {
+		repo := repo // Capture for goroutine
 		bareRepoPath := filepath.Join(reposDir, repo.BareRepoName())
 
 		// Check if repository already exists
@@ -85,12 +95,33 @@ func (c *InitCmd) Run(ctx *Context) error {
 			continue
 		}
 
-		ctx.Printf("Cloning %s from %s...\n", repo.Name, repo.URL)
-		ctx.LogInfo("cloning repository", "name", repo.Name, "url", repo.URL)
-		if err := git.CloneBare(repo.URL, bareRepoPath); err != nil {
-			return errors.CloneFailed(repo.Name, err)
-		}
-		ctx.Printf("Successfully cloned %s\n", repo.Name)
+		g.Go(func() error {
+			mu.Lock()
+			ctx.Printf("Cloning %s from %s...\n", repo.Name, repo.URL)
+			ctx.LogInfo("cloning repository", "name", repo.Name, "url", repo.URL, "shallow", c.Shallow)
+			mu.Unlock()
+
+			var err error
+			if c.Shallow {
+				err = git.CloneBareShallow(repo.URL, bareRepoPath, c.Depth)
+			} else {
+				err = git.CloneBare(repo.URL, bareRepoPath)
+			}
+
+			if err != nil {
+				return errors.CloneFailed(repo.Name, err)
+			}
+
+			mu.Lock()
+			ctx.Printf("Successfully cloned %s\n", repo.Name)
+			mu.Unlock()
+			return nil
+		})
+	}
+
+	// Wait for all clones to complete
+	if err := g.Wait(); err != nil {
+		return err
 	}
 
 	// Handle --allow-delete flag

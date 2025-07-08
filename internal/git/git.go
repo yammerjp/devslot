@@ -19,6 +19,36 @@ func CloneBare(url, destPath string) error {
 	return cmd.Run()
 }
 
+// CloneBareShallow clones a repository as a shallow bare repository
+func CloneBareShallow(url, destPath string, depth int) error {
+	args := []string{"clone", "--bare", "--depth", fmt.Sprintf("%d", depth), url, destPath}
+	cmd := exec.Command("git", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// Unshallow converts a shallow repository to a complete one
+func Unshallow(bareRepoPath string) error {
+	cmd := exec.Command("git", "-C", bareRepoPath, "fetch", "--unshallow")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// IsShallow checks if a repository is shallow
+func IsShallow(bareRepoPath string) (bool, error) {
+	shallowFile := filepath.Join(bareRepoPath, "shallow")
+	_, err := os.Stat(shallowFile)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
 // CreateWorktree creates a new worktree for a bare repository
 func CreateWorktree(bareRepoPath, worktreePath, branch string) error {
 	// First, check if the branch exists

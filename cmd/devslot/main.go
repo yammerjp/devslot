@@ -22,6 +22,7 @@ type CLI struct {
 	Reload      command.ReloadCmd      `cmd:"" help:"Ensure all worktrees exist for the slot and run post-reload hook if exists"`
 	List        command.ListCmd        `cmd:"" help:"List all existing slots"`
 	Doctor      command.DoctorCmd      `cmd:"" help:"Check consistency of project structure and repositories"`
+	Unshallow   command.UnshallowCmd   `cmd:"" help:"Convert shallow repositories to complete ones"`
 	Version     command.VersionCmd     `cmd:"" help:"Show devslot version"`
 
 	VersionFlag kong.VersionFlag `short:"v" name:"version" help:"Show version"`
