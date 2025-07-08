@@ -37,6 +37,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 		"Created hook script: hooks/post-init",
 		"Created hook script: hooks/post-create",
 		"Created hook script: hooks/pre-destroy",
+		"Created hook script: hooks/post-destroy",
 		"Created hook script: hooks/post-reload",
 		"Boilerplate project structure created successfully!",
 	}
@@ -63,6 +64,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 		"hooks/post-init",
 		"hooks/post-create",
 		"hooks/pre-destroy",
+		"hooks/post-destroy",
 		"hooks/post-reload",
 	}
 	for _, file := range files {
@@ -92,6 +94,7 @@ func TestBoilerplateCmd_Run(t *testing.T) {
 		"hooks/post-init",
 		"hooks/post-create",
 		"hooks/pre-destroy",
+		"hooks/post-destroy",
 		"hooks/post-reload",
 	}
 	for _, hook := range hookFiles {
@@ -192,8 +195,10 @@ func TestBoilerplateCmd_WithSubdirectory(t *testing.T) {
 	expectedFiles := []string{
 		"devslot.yaml",
 		".gitignore",
+		"hooks/post-init",
 		"hooks/post-create",
 		"hooks/pre-destroy",
+		"hooks/post-destroy",
 		"hooks/post-reload",
 	}
 

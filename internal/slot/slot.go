@@ -155,6 +155,12 @@ func (m *Manager) Destroy(name string, cfg *config.Config) error {
 		return fmt.Errorf("failed to remove slot directory: %w", err)
 	}
 
+	// Run post-destroy hook
+	if err := m.hookRunner.Run(hook.PostDestroy, name, hookEnv); err != nil {
+		// Just log warning since slot is already destroyed
+		fmt.Fprintf(os.Stderr, "Warning: post-destroy hook failed: %v\n", err)
+	}
+
 	return nil
 }
 

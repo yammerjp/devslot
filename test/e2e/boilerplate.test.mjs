@@ -129,6 +129,7 @@ async function testBoilerplateInNewDir() {
     'hooks/post-init',
     'hooks/post-create',
     'hooks/pre-destroy',
+    'hooks/post-destroy',
     'hooks/post-reload'
   ]
   

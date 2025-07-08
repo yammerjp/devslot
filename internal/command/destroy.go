@@ -17,8 +17,11 @@ type DestroyCmd struct {
 func (c *DestroyCmd) Help() string {
 	return `Removes a slot and all its worktrees.
 
-Runs pre-destroy hook if it exists. If the hook fails (non-zero exit),
-the destruction is aborted and the slot remains intact.`
+Runs pre-destroy hook before removal. If the hook fails (non-zero exit),
+the destruction is aborted and the slot remains intact.
+
+Runs post-destroy hook after successful removal. If this hook fails,
+the slot is already destroyed and only a warning is shown.`
 }
 
 func (c *DestroyCmd) Run(ctx *Context) error {
